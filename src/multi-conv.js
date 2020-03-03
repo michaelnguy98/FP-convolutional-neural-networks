@@ -177,7 +177,7 @@ export function drawImageAndText() {
         .attr("font-family", "sans-serif")
         .attr("font-size", fontSize / 2)
         .attr("pointer-events", "none")
-        .text("Blah Blah Blah")
+        .text("Description 1")
         .classed("imageText", true);
 }
 
@@ -225,13 +225,13 @@ export function updateState(action) {
     let txt;
     if (numLayers == 1) {
         img = image1;
-        txt = "Blah Blah Blah";
+        txt = "Description 1";
     } else if (numLayers == 2) {
         img = image2;
-        txt = "Bleep Bloop";
+        txt = "Description 2";
     } else if (numLayers == 3) {
         img = image3;
-        txt = "Crack a cold one";
+        txt = "Description 3";
     }
     d3.select("#imageWrapper")
         .select(".imageRect")
