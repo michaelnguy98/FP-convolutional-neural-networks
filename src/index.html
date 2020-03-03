@@ -1,11 +1,90 @@
-<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>My Title</title>
+    <title>Convolutional Neural Networks</title>
+    <style>
+      :root {
+        --thumbSize: 0px;
+        --kernelThumbSize: 0px;
+        --kernelThumbFont: 0px;
+      }
+      .thumbnail {
+        width: var(--thumbSize);
+        border: 3px solid transparent;
+        opacity: 0.5;
+        cursor: pointer;
+      }
+      caption {
+        font-size: var(--kernelThumbSize);
+      }
+      .kernelThumbCell {
+          width: var(--kernelThumbSize);
+          height: var(--kernelThumbSize);
+          font-size: var(--kernelThumbFont);
+          text-align: center;
+      }
+      .selected {
+        border: 3px solid red;
+        opacity: 1 !important;
+      }
+      .kselected {
+        border: 3px solid red;
+        opacity: 1 !important;
+      }
+      .kernel {
+        cursor: pointer;
+        opacity: 0.5;
+        dominant-baseline: middle;
+        border-collapse: collapse;
+        border: 1px solid black;
+        display: inline-table;
+        background-color: white;
+        margin-left: 2px;
+      }
+    </style>
   </head>
   <body>
-    <h1>My Webpage</h1>
-    <script src="./index.js"></script>
+    <div id="selectionWrapper" style="display: flex; padding: 0em; visibility: hidden;">
+      <div id="thumbs" style="padding-right: 1em;">
+        <div>
+            <p style="font-size: var(--kernelThumbFont); margin-block-start: 0px; margin-block-end: 0px; visibility: hidden;">.</p>
+            <p style="font-size: var(--kernelThumbFont); margin-block-start: 0px; margin-block-end: 0px; visibility: hidden;">.</p>
+        </div>
+        <img class="thumbnail selected" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/bird.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/car.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/cat.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/deer.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/dog.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/frog.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/horse.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/plane.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/ship.png"/>
+        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/truck.png"/>
+      </div>
+      <div id="kernels">
+      </div>
+    </div>
+    <canvas hidden id="input-image" width="32px" height="32px"></canvas>
+    <select hidden id="image-selection">
+      <option selected value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/bird.png">Bird</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/car.png">Car</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/cat.png">Cat</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/deer.png">Deer</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/dog.png">Dog</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/frog.png">Frog</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/horse.png">Horse</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/plane.png">Plane</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/ship.png">Ship</option>
+      <option value="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/truck.png">Truck</option>
+    </select>
+    <select hidden id="filter-selection">
+      <option selected value="identity" title="The identity kernel preserves the input image.">Identity</option>
+      <option value="x_sobel" title="The horizontal sobel kernel detects horizontal changes.">Horizontal Sobel</option>
+      <option value="y_sobel" title="The vertical sobel kernel detects vertical changes.">Vertical Sobel</option>
+      <option value="edge_detection" title="The edge detection kernel highlights edges.">Edge Detection</option>
+      <option value="sharpen" title="The sharpen kernel sharpens the image by amplifying the input pixel and subtracting surrounding pixels.">Sharpen</option>
+      <option value="box_blur" title="The box blur kernel blurs the image by averaging surrounding pixels.">Box Blur</option>
+    </select>
+    <script src="./d3.js"></script>
   </body>
 </html>
