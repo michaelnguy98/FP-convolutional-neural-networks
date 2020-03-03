@@ -1,3 +1,9 @@
 import {main} from './convIntro/main';
+import {init_cnn_vis} from './cnn_vis';
 
-window.onload = main;
+function loadSections() {
+  main();
+  init_cnn_vis();
+}
+
+window.onload = loadSections;

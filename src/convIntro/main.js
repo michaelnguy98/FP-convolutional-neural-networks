@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import * as tf from "@tensorflow/tfjs";
 
-import * as config from "./config";
+import * as config from "../config";
 
 import {initSVG, initInputImg, initKernelImg, initOutputImg, initEffects, initAnnotations, updateAnnotation, initControls} from "./initSVG";
 import {drawInputData, drawKernelData, drawOutputData, drawEffects, removeEffects, grayToFloat, drawOutputDataPoint} from "./updateSVG";

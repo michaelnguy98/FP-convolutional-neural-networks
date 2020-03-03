@@ -1,12 +1,12 @@
 import * as d3 from "d3";
 
-import * as config from "../config";
+import * as config from "./config";
 
 /**
  * Initialize the root SVG.
  */
 export function initSVG() {
-    d3.select("#convIntro")
+    d3.select("body")
         .style("width", config.svgWidth + "px")
         .style("padding", (config.kernelCellWidth / 4) + "px")
         .append("svg")

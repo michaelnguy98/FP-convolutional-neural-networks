@@ -1,9 +1,13 @@
 import * as d3 from "d3";
 
-import * as config from "../config";
+import * as config from "./config";
 import {flattenImg} from "./tensor";
-import {image, resultImg, visibleImg, kernel, slide_idx} from "./main";
+import {image, resultImg, visibleImg, kernel, slide_idx} from "./d3"
 
+/*
+const x_scale = (i) => i * config.cellWidth;
+const y_scale = (i) => i * config.cellHeight;
+*/
 const x_scale = d3.scaleLinear()
             .domain([0, config.inputWidth - 1])
             .range([0, config.cellWidth * (config.inputWidth - 1)])
