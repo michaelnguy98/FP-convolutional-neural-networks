@@ -44,30 +44,32 @@
     </style>
   </head>
   <body>
-    <div id="selectionWrapper" style="display: flex; padding: 0em; visibility: hidden;">
-      <div id="thumbs" style="padding-right: 1em;">
-        <div>
-            <p style="font-size: var(--kernelThumbFont); margin-block-start: 0px; margin-block-end: 0px; visibility: hidden;">.</p>
-            <p style="font-size: var(--kernelThumbFont); margin-block-start: 0px; margin-block-end: 0px; visibility: hidden;">.</p>
+    <div id="convIntroSection">
+      <div id="selectionWrapper" style="display: flex; padding: 0em; visibility: hidden;">
+        <div id="thumbs" style="padding-right: 1em;">
+          <div>
+              <p style="font-size: var(--kernelThumbFont); margin-block-start: 0px; margin-block-end: 0px; visibility: hidden;">.</p>
+              <p style="font-size: var(--kernelThumbFont); margin-block-start: 0px; margin-block-end: 0px; visibility: hidden;">.</p>
+          </div>
+          <img class="thumbnail selected" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/bird.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/car.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/cat.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/deer.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/dog.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/frog.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/horse.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/plane.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/ship.png"/>
+          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/truck.png"/>
         </div>
-        <img class="thumbnail selected" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/bird.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/car.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/cat.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/deer.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/dog.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/frog.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/horse.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/plane.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/ship.png"/>
-        <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/truck.png"/>
+        <div id="kernels">
+        </div>
       </div>
-      <div id="kernels">
-      </div>
+      <canvas hidden id="input-image" width="32px" height="32px"></canvas>
     </div>
-    <canvas hidden id="input-image" width="32px" height="32px"></canvas>
 
-    <div id="convIntroSection"></div>
     <div id="multiConvSection"></div>
+
     <div id="userTrainSection"></div>
 
     <script src="./index.js"></script>
