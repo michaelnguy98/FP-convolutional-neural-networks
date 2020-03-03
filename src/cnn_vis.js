@@ -196,7 +196,7 @@ function draw_layer_connection(svg, start_x, start_y, start_w, start_h, start_n,
 function draw_cnn_vis(img) {
     let svg = d3.select("#cnn-vis")
 
-    draw_nested_cube(svg, 200, 250, 50, 50, 32, 10, Math.PI / 3, "black")
+    // draw_nested_cube(svg, 200, 250, 50, 50, 32, 10, Math.PI / 3, "black")
 
 
     for(let i = 0; i < 3; ++i) {

@@ -16,7 +16,7 @@ export let kernel = [[]];
 
 export let slide_idx = 0
 let slides = [
-    new Slide("Bird", "demo", "Convolution simply takes two matrics of the same size, gives weight to neighbors of a pixel, then sums the weights. \n \n " +
+    new Slide("Bird", "demo", "Convolution simply takes two matrics of the same size, multiplies corresponding entries and adds them together. \n \n " +
         "Mouse over the left input matrix to convolve small patches with the kernel below! (Or use one of 'Auto Conv' and 'Conv All') \n \n Click 'Next' once " + 
         "you understand how the math works.", 0, 0),
     new Slide("Bird", "edge_detection", "Usually convolution is applied to images, where the numbers represent colors. \n \n " +
