@@ -41,8 +41,7 @@ export function init_cnn_vis() {
     let width = 2 * config.img_width + config.spaceBetween + config.borderWidth
     let height = config.img_height + config.borderWidth
     
-    d3.select("body")
-    .append("div")
+    d3.select("#userTrainSection")
     .append("svg")
     .attr("width", width)
     .attr("height", height)

@@ -1,8 +1,10 @@
-import {main} from './convIntro/main';
+import {initConvIntroSection} from './convIntro/main';
 import {init_cnn_vis} from './cnn_vis';
+import {initMultiConvSection} from './multi-conv';
 
 function loadSections() {
-  main();
+  initMultiConvSection();
+  initConvIntroSection();
   init_cnn_vis();
 }
 
