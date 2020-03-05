@@ -67,6 +67,48 @@
     <canvas hidden id="input-image" width="32px" height="32px"></canvas>
 
     <div id="convIntroSection"></div>
+
+    <div id = "rgbChannelSection"></div>
+    <svg width="100%" height="100%" viewBox="0 0 1280 1024" preserveAspectRatio="xMinYMin meet" border="1">
+      <image id="bird" height="20%" width="20%" xlink:href="../Images/bird.png"/>
+      <g fill="transparent" stroke-width="3" transform="translate(300 110)">
+        <image id="birdRed" transform="scale(1)" xlink:href="../Images/birdRed.png" width="10%" height="10%">
+          <animateTransform attributeName="transform" type="scale"
+            begin="birdRed.mouseover" end="birdRed.mouseout"
+            from="1" to="3" dur="0.5s" fill="freeze">
+          </animateTransform>
+          <animateTransform attributeName="transform" type="scale"
+            begin="birdRed.mouseout" end="birdRed.mouseover"
+            from="3" to="1" dur="0.5s" fill="freeze">
+          </animateTransform>
+        </image>
+      </g>
+      <g fill="transparent" stroke-width="3" transform="translate(320 100)">
+        <image id="birdBlue" transform="scale(1)" xlink:href="../Images/birdBlue.png" width="10%" height="10%">
+          <animateTransform attributeName="transform" type="scale"
+            begin="birdBlue.mouseover" end="birdBlue.mouseout"
+            from="1" to="3" dur="0.5s" fill="freeze">
+          </animateTransform>
+          <animateTransform attributeName="transform" type="scale"
+            begin="birdBlue.mouseout" end="birdBlue.mouseover"
+            from="3" to="1" dur="0.5s" fill="freeze">
+          </animateTransform>
+        </image>
+      </g>
+      <g fill="transparent" stroke-width="3" transform="translate(340 90)">
+        <image id="birdGreen" transform="scale(1)" xlink:href="../Images/birdGreen.png" width="10%" height="10%">
+          <animateTransform attributeName="transform" type="scale"
+            begin="birdGreen.mouseover" end="birdGreen.mouseout"
+            from="1" to="3" dur="0.5s" fill="freeze">
+          </animateTransform>
+          <animateTransform attributeName="transform" type="scale"
+            begin="birdGreen.mouseout" end="birdGreen.mouseover"
+            from="3" to="1" dur="0.5s" fill="freeze">
+          </animateTransform>
+        </image>
+      </g>
+    </svg>
+
     <div id="multiConvSection"></div>
     <div id="userTrainSection"></div>
 
