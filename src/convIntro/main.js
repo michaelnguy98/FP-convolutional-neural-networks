@@ -254,15 +254,19 @@ function update_slide(kernel_description=null) {
     updateAnnotation(annotation)
 
     if (slide_idx == 0) {
-        d3.select("#prevButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#prevButtonWrapper")
             .attr("visibility", "hidden");
     } else if (slide_idx == slides.length - 1) {
-        d3.select("#nextButtonWrapper")
-           .attr("visibility", "hidden");
+        d3.select('#rootDisplay')
+            .select("#nextButtonWrapper")
+            .attr("visibility", "hidden");
     } else {
-        d3.select("#prevButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#prevButtonWrapper")
             .attr("visibility", "visible");
-        d3.select("#nextButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#nextButtonWrapper")
             .attr("visibility", "visible");
     }
         
@@ -306,6 +310,7 @@ export function initButtons() {
         .attr("y", 0)
         .attr("width", config.spaceBetween / 2)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", conv_all)
         .attr("fill", config.convolveColor);
     convAllButton.append("text")
@@ -330,6 +335,7 @@ export function initButtons() {
         .attr("y", 0)
         .attr("width", config.spaceBetween / 2)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", animateConv)
         .attr("fill", config.convolveColor);
     convButton.append("text")
@@ -361,6 +367,7 @@ export function initButtons() {
         .attr("id", "prevButtonColor")
         .attr("width", config.spaceBetween / 4)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", prev_slide)
         .attr("fill", config.prevColor);
     prevButton.append("text")
@@ -380,6 +387,7 @@ export function initButtons() {
         .attr("y", 0)
         .attr("width", config.spaceBetween / 4)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", next_slide)
         .attr("fill", config.nextColor);
     nextButton.append("text")
