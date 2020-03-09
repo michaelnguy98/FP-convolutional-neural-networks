@@ -3,7 +3,7 @@ import image1 from "../cat_conv/cat_conv1.png";
 import image2 from "../cat_conv/cat_conv3.png";
 import image3 from "../cat_conv/cat_conv5.png";
 
-let numLayers = 1;
+let numLayers = 0;
 
 const borderWidth = 900;
 const borderHeight = 900;
@@ -16,13 +16,14 @@ const rectHeight = 140;
 const startingConvX = 50;
 const startingConvY = 50;
 
-const spacing = 150;
+const spacing = 120;
 
 export function initMultiConvSection() {
     initSVG();
-    drawLayers();
+    drawInputImage();
+    drawConvLayers();
     drawButtons();
-    drawImageAndText();
+    drawText();
 }
 
 /**
@@ -37,50 +38,101 @@ export function initSVG() {
 }
 
 /**
- * Draws the Layers
+ * Draws the ConvLayers
  */
-export function drawLayers() {
+export function drawConvLayers() {
     // Make Layers
 
-    const data = ["Input"];
+    const data = [];
 
-    for (let i = 1; i <= numLayers; i++) {
-        data.push(`Conv ${i}`);
+    for (let i = 0; i < numLayers; i++) {
+        data.push(`Layer ${i + 1}`);
     }
-
-    data.push("Output");
     
-    const layerWrappers = d3.select("#multiConvSvg")
-        .selectAll(".layerWrapper")
+    const convLayerWrappers = d3.select("#multiConvSvg")
+        .selectAll(".convLayerWrapper")
         .data(data)
         .enter()
         .append("g")
-        .classed("layerWrapper", true);
-    layerWrappers.append("rect")
-        .attr("x", (_, i) => startingConvX + spacing * i)
-        .attr("y", startingConvY)
-        .attr("width", rectWidth)
-        .attr("height", rectHeight)
-        .attr("fill", "white")
+        .classed("convLayerWrapper", true);
+
+    // arrow
+    convLayerWrappers.append("svg:defs").append("svg:marker")
+        .attr("id", "triangle")
+        .attr("refX", 0)
+        .attr("refY", 3)
+        .attr("markerWidth", 10)
+        .attr("markerHeight", 10)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,0 L0,6 L9,3 z")
+        .style("stroke", "black");
+    
+    const startLayers = startingConvX + 120
+    
+    //line              
+    convLayerWrappers.append("line")
+        .attr("x1", (_, i) => startLayers + (spacing + 100) * i)
+        .attr("y1", 100)
+        .attr("x2", (_, i) => startLayers + (spacing + 100) * i + 75)
+        .attr("y2", 100)          
+        .attr("stroke-width", 1)
         .attr("stroke", "black")
-        .classed("layerRect", true);
-    layerWrappers.append("text")
-        .attr("x", -1 * (startingConvY + rectHeight / 2))
-        .attr("y", (_, i) => 1 * (startingConvX + spacing * i + rectWidth / 2))
+        .attr("marker-end", "url(#triangle)")
+        .classed("layerArrow", true);
+
+    //text
+    convLayerWrappers.append("text")
+        .attr("x", (_, i) => startLayers + (spacing + 100) * i + 40)
+        .attr("y", 75)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
-        .attr("font-size", fontSize)
-        .attr("transform", "rotate(-90)")
-        .classed("layerText", true);    
+        .attr("font-size", fontSize / 2)
+        .attr("pointer-events", "none")
+        .text("Convolution");
+
+    const imageWidth = 100;
+    const imageHeight = 100; 
+
+    //image
+    convLayerWrappers.append("svg:image")
+        .attr("x", (_, i) => startLayers + (spacing + 100) * i + 105)
+        .attr("y", startingConvY)
+        .attr("width", imageWidth)
+        .attr("height", imageHeight)
+        .attr("stroke", "black")
+        .attr('xlink:href', (_, i) => {
+            let img;
+            if (i+1 == 1) {
+                img = image1;
+            } else if (i+1 == 2) {
+                img = image2;
+            } else if (i+1 == 3) {
+                img = image3;
+            }
+            return img;
+        });
+
+    const imageY = startingConvY;
+
+    convLayerWrappers.append("text")
+        .attr("x", (_, i) => startLayers + (spacing + 100) * i + 105 + imageWidth / 2)
+        .attr("y", imageY - imageHeight / 10)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("font-family", "sans-serif")
+        .attr("font-size", fontSize / 2)
+        .attr("pointer-events", "none")
+        .text((_, i) => `Layer ${i+1}`);
 
     d3.select("#multiConvSvg")
-        .selectAll(".layerText")
+        .selectAll(".convLayerText")
         .data(data)
         .text((d) => d);
 
     d3.select("#multiConvSvg")
-        .selectAll(".layerWrapper")
+        .selectAll(".convLayerWrapper")
         .data(data)
         .exit()
         .remove();
@@ -151,12 +203,12 @@ export function drawButtons() {
 /**
  * Draws the image and text
  */
-export function drawImageAndText() {
+export function drawInputImage() {
     const imageWidth = 100;
     const imageHeight = 100; 
     
-    let imageX = startingConvX + 50;
-    let imageY = startingConvY + rectHeight + 150;
+    let imageX = startingConvX;
+    let imageY = startingConvY;
     
     const imageWrapper = d3.select("#multiConvSvg")
         .append("g")
@@ -167,8 +219,32 @@ export function drawImageAndText() {
         .attr("width", imageWidth)
         .attr("height", imageHeight)
         .attr('xlink:href', image1)
-        .attr("stroke", "black")
-        .classed("imageRect", true);
+        .attr("stroke", "black");
+    imageWrapper.append("text")
+        .attr("x", imageX + imageWidth / 2)
+        .attr("y", imageY - imageHeight / 10)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("font-family", "sans-serif")
+        .attr("font-size", fontSize / 2)
+        .attr("pointer-events", "none")
+        .text("Input");
+    
+}
+
+/**
+ * Draws the text
+ */
+export function drawText() {
+    const imageWidth = 100;
+    const imageHeight = 100; 
+    
+    let imageX = startingConvX + 75;
+    let imageY = startingConvY + rectHeight + 150;
+    
+    const imageWrapper = d3.select("#multiConvSvg")
+        .append("g")
+        .attr("id", "textWrapper");
     imageWrapper.append("text")
         .attr("x", imageX + spacing + imageWidth / 2)
         .attr("y", imageY + imageHeight / 2)
@@ -177,8 +253,8 @@ export function drawImageAndText() {
         .attr("font-family", "sans-serif")
         .attr("font-size", fontSize / 2)
         .attr("pointer-events", "none")
-        .text("Description 1")
-        .classed("imageText", true);
+        .text("Description 0")
+        .classed("descriptionText", true);
 }
 
 const actions = {
@@ -195,7 +271,7 @@ export function updateState(action) {
             if (numLayers <= 2) {
                 numLayers++;
             }
-            if (numLayers > 1) {
+            if (numLayers > 0) {
                 d3.select("#removeButtonWrapper")
                     .attr("visibility", "visible")
             }
@@ -205,14 +281,14 @@ export function updateState(action) {
             }
             break;
         case 'REMOVE':
-            if (numLayers > 1) {
+            if (numLayers > 0) {
                 numLayers--;
             }
             if (numLayers < 3) {
                 d3.select("#addButtonWrapper")
                     .attr("visibility", "visible")
             }
-            if (numLayers <= 1) {
+            if (numLayers <= 0) {
                 d3.select("#removeButtonWrapper")
                     .attr("visibility", "hidden");
             }
@@ -221,24 +297,19 @@ export function updateState(action) {
 
     }
 
-    let img;
     let txt;
     if (numLayers == 1) {
-        img = image1;
         txt = "Description 1";
     } else if (numLayers == 2) {
-        img = image2;
         txt = "Description 2";
     } else if (numLayers == 3) {
-        img = image3;
         txt = "Description 3";
+    } else {
+        txt = "Description 0";
     }
-    d3.select("#imageWrapper")
-        .select(".imageRect")
-        .attr('xlink:href', img);
-    d3.select("#imageWrapper")
-        .select(".imageText")
+    d3.select("#textWrapper")
+        .select(".descriptionText")
         .text(txt);
 
-    drawLayers();
+    drawConvLayers();
 }
