@@ -3,6 +3,11 @@ import image1 from "../cat_conv/cat_conv1.png";
 import image2 from "../cat_conv/cat_conv3.png";
 import image3 from "../cat_conv/cat_conv5.png";
 
+import puppy from "../Images/dog.png";
+import puppySobel from "../Images/puppySobel.png";
+import puppySobelConv from "../Images/puppySobelConv.png";
+import puppyOutput from "../Images/puppyOutput.png";
+
 let numLayers = 0;
 
 const borderWidth = 900;
@@ -105,11 +110,11 @@ export function drawConvLayers() {
         .attr('xlink:href', (_, i) => {
             let img;
             if (i+1 == 1) {
-                img = image1;
+                img = puppySobel;
             } else if (i+1 == 2) {
-                img = image2;
+                img = puppySobelConv;
             } else if (i+1 == 3) {
-                img = image3;
+                img = puppyOutput;
             }
             return img;
         });
@@ -218,7 +223,7 @@ export function drawInputImage() {
         .attr("y", imageY)
         .attr("width", imageWidth)
         .attr("height", imageHeight)
-        .attr('xlink:href', image1)
+        .attr('xlink:href', puppy)
         .attr("stroke", "black");
     imageWrapper.append("text")
         .attr("x", imageX + imageWidth / 2)
