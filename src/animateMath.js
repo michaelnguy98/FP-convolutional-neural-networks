@@ -1,9 +1,10 @@
 import * as d3 from "d3";
 import * as config from './config';
+import { max } from 'd3';
 
 export function initAnimateMathSection() {
     initSVG();
-    drawFrame();
+    drawFrame(false);
 }
 
 let curFrame = 0;
@@ -78,9 +79,14 @@ function flattenArray(a) {
     return a.flat().flat();
 }
 
-const animation = d3.transition()
-    .duration(500)
-    .ease(d3.easeLinear);
+for (const frame of frames) {
+    const flat = flattenArray(frame.matrices);
+    const paddedCells = Array(maxNumCells - flat.length).fill('').concat(flat);
+    frame.paddedCells = paddedCells;
+}
+
+const moveAnimationDuration = 3000;
+const textAnimationDuration = 1500;
 
 const cellWidth = config.kernelCellWidth;
 const cellHeight = config.kernelCellHeight;
@@ -112,6 +118,7 @@ function initSVG() {
         .data(Array(maxNumCells))
         .enter()
         .append("g")
+        .attr("transform", `translate(${-svgWidth}, ${-svgHeight})`)
         .classed("cellWrapper", true);
     
     // Cell Color and Outline
@@ -180,22 +187,23 @@ function initSVG() {
         .text("Next");
 }
 
-function drawFrame() {
+function drawFrame(useTransition = true) {
+    let t;
+
     const frameData = frames[curFrame];
     const numCells = frameData.matrices.length * frameData.matrices[0].length * frameData.matrices[0][0].length;
 
-    const paddedCellData = flattenArray(frameData.matrices);
-    for (let i = 0; i < maxNumCells - numCells; ++i) {
-        paddedCellData.unshift('');
-    }
-    
     const leftPadding = leftMargin + cellWidth * ((maxNumCols - ((frameData.matrices[0][0].length) * frameData.matrices.length + gapSize * (frameData.matrices.length - 1))) / 2);
     const topPadding = topMargin + ((maxNumRows - frameData.matrices[0].length) / 2) * cellHeight;
 
+    t = useTransition ?
+        d3.transition().duration(textAnimationDuration / 2).ease(d3.easeCubic) :
+        null;
+
     d3.select("#animateMathSvg")
         .selectAll(".cellWrapper")
-        .data(paddedCellData)
-        .transition(animation)
+        .data(frameData.paddedCells)
+        .transition(t)
         .attr("transform", (_, i) => {
             i = i % numCells;
 
@@ -210,11 +218,27 @@ function drawFrame() {
             return `translate(${leftPadding + matrixI * matrixGap + colI * cellWidth}, ${topPadding + rowI * cellHeight})`;
         });
 
+    t = useTransition ?
+        d3.transition().duration(textAnimationDuration / 2).ease(d3.easeCubic):
+        null;
     d3.select("#animateMathSvg")
         .selectAll(".cellText")
-        .data(paddedCellData)
-        .transition(animation)
-        .text(d => d);
+        .data(frameData.paddedCells)
+        .transition(t)
+        .attr("fill", "white")
+        .on("end", appearText);
+    
+    function appearText() {
+        t = useTransition ?
+            d3.transition().duration(textAnimationDuration / 2).ease(d3.easeCubic):
+            null;
+        d3.select("#animateMathSvg")
+            .selectAll(".cellText")
+            .data(frameData.paddedCells)
+            .text(d => d)
+            .transition(t)
+            .attr("fill", "black");
+    }
 }
 
 function prevFrame() {
