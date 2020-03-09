@@ -10,9 +10,7 @@ export function initAnimateRGBSection() {
 
 let unified = true;
 
-const animation = d3.transition()
-    .duration(2000)
-    .ease(d3.easeLinear);
+const separateDuration = 3000;
 
 const margin = config.kernelCellWidth;
 
@@ -109,6 +107,8 @@ function initSVG() {
 }
 
 function updateFrame() {
+    const animation = d3.transition().duration(separateDuration).ease(d3.easeCubic);
+
     if (unified) {
         d3.select("#imgR")
             .transition(animation)
