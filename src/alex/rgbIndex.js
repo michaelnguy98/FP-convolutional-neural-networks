@@ -12,7 +12,7 @@ function init() {
         .attr("height", 1000) // add height
         .attr("id", "rgbG")
 
-    buildrgb("https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/bird.png", x => drawRGB(x))
+    buildrgb("https://opengameart.org/sites/default/files/Pixel_Bird_png_0.png", x => drawRGB(x))
 }
 
 function buildrgb(src, func) {
@@ -48,13 +48,63 @@ function buildrgb(src, func) {
 
 function drawRGB(img) {
     let g = d3.select("#rgbG")
+
+    let s = 256
+    let n = 64
+    let w = s / n
+    let h = s / n
+    g.selectAll("squareO")
+        .data(img[0].reduce((a, b) => a.concat(b)))
+        .enter()
+        .append("rect")
+        .attr("x", function(d, i) {
+            return 300 + (i % n) * w
+        })
+        .attr("y", function(d, i) {
+            return (Math.floor(i / n)) * h
+        })
+        .attr("width", w)
+        .attr("height", h)
+        .attr("fill-opacity", 1)
+        .attr("fill", function(d, i) {
+            let color = [d, 
+                img[1].reduce((a, b) => a.concat(b))[i],
+                img[2].reduce((a, b) => a.concat(b))[i]]
+            return d3.rgb(color[0], color[1], color[2])
+        })
+        .style("cursor", "pointer")
+        .on("mouseover", function(d, i) {
+            d3.select(this).attr("stroke", "white")
+            let nums = [0, 1, 2]
+            g.selectAll("selected")
+                .data(nums)
+                .enter()
+                .append("rect")
+                .attr("x", function(d) {
+                    return d * 300 + (i % n) * w
+                })
+                .attr("y", function(d) {
+                    return 300 + (Math.floor(i / n)) * h
+                })  
+                .attr("width", w)
+                .attr("height", h)
+                .attr("stroke", "white")
+                .attr("fill-opacity", 0)
+                .classed("selected", true);
+        })
+        .on("mouseout", function(d) {
+            d3.select(this).attr("stroke", "none")
+            g.selectAll("rect.selected").remove()
+        })
+        .classed("squareO", true);
     
     for (let i = 0; i < 3; ++i) {
-        draw_box(g, img[i], i * 300, 0, 256, 32, i);
+        draw_box(g, img, i * 300, 300, s, n, i);
     }
 }
 
-function draw_box(g, data, x, y, s, n, index) {
+function draw_box(g, img, x, y, s, n, index) {
+    let data = img[index]
     let w = s / n
     let h = s / n
     // g.selectAll("square" + index).remove();
@@ -62,11 +112,11 @@ function draw_box(g, data, x, y, s, n, index) {
         .data(data.reduce((a, b) => a.concat(b), []))
         .enter()
         .append("rect")
-        .attr("x", function(d, i, j) {
+        .attr("x", function(d, i) {
             return x + (i % n) * w
         })
-        .attr("y", function(d, i, j) {
-            return y + (n - 1 - Math.floor(i / n)) * h
+        .attr("y", function(d, i) {
+            return y + (Math.floor(i / n)) * h
         })
         .attr("width", w)
         .attr("height", h)
@@ -74,18 +124,39 @@ function draw_box(g, data, x, y, s, n, index) {
         .attr("fill", function(d) {
             let color = [0, 0, 0]
             color[index] = d
-            return d3.rgb(color[0], color[1], color[3])
+            return d3.rgb(color[0], color[1], color[2])
         })
         .style("cursor", "pointer")
-        .on("mouseover", function(d) { d3.select(this).attr("stroke", "white") })
-        .on("mouseout", function(d) { d3.select(this).attr("stroke", "none") })
-        // .on("mouseout", function(d) {
-        //     let color = [0, 0, 0]
-        //     color[index] = d
-        //     d3.select(this).attr("fill", d3.rgb(color[0], color[1], color[3]))
-        // })
-        .classed("square" + index, true)
-        .addclass;
+        .on("mouseover", function(d, i) {
+            d3.select(this).attr("stroke", "white")
+            let nums = [0, 1, 2]
+            g.selectAll("selected")
+                .data(nums)
+                .enter()
+                .append("rect")
+                .attr("x", function(d) {
+                    if (d == index) {
+                        return 300 + (i % n) * w
+                    }
+                    return d * 300 + (i % n) * w
+                })
+                .attr("y", function(d) {
+                    if (d == index) {
+                        return (Math.floor(i / n)) * h
+                    }
+                    return y + (Math.floor(i / n)) * h
+                })  
+                .attr("width", w)
+                .attr("height", h)
+                .attr("stroke", "white")
+                .attr("fill-opacity", 0)
+                .classed("selected", true);
+        })
+        .on("mouseout", function(d) {
+            d3.select(this).attr("stroke", "none")
+            g.selectAll("rect.selected").remove()
+        })
+        .classed("square" + index, true);
 }
 
 window.onload = init;
