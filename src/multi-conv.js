@@ -258,8 +258,20 @@ export function drawText() {
         .attr("font-family", "sans-serif")
         .attr("font-size", fontSize / 2)
         .attr("pointer-events", "none")
-        .text("Description 0")
+        .attr("dy", "0em")
+        .text("Here is the puppy image.")
         .classed("descriptionText", true);
+    imageWrapper.append("text")
+        .attr("x", imageX + spacing + imageWidth / 2)
+        .attr("y", imageY + imageHeight / 2)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("font-family", "sans-serif")
+        .attr("font-size", fontSize / 2)
+        .attr("pointer-events", "none")
+        .attr("dy", "1em")
+        .text("Lets apply a convolution to it!")
+        .classed("descriptionText2", true);;
 }
 
 const actions = {
@@ -303,18 +315,26 @@ export function updateState(action) {
     }
 
     let txt;
+    let txt2;
     if (numLayers == 1) {
-        txt = "Description 1";
+        txt = "Parts of the puppy seem to be more prominent.";
+        txt2 = "Let's apply another convolution!";
     } else if (numLayers == 2) {
-        txt = "Description 2";
+        txt = "A region around the feet and legs are being highlighted.";
+        txt2 = "Let's apply another convolution!";
     } else if (numLayers == 3) {
-        txt = "Description 3";
+        txt = "The eyes of the puppy are highlighted the most.";
+        txt2 = "Maybe our network is searching for these kinds of features...";
     } else {
-        txt = "Description 0";
+        txt = "Here is the puppy image.";
+        txt2 = "Let's apply a convolution to it!";
     }
     d3.select("#textWrapper")
         .select(".descriptionText")
         .text(txt);
+    d3.select("#textWrapper")
+        .select(".descriptionText2")
+        .text(txt2);
 
     drawConvLayers();
 }
