@@ -2,6 +2,8 @@ import * as d3 from "d3";
 import * as config from "./config";
 import * as d3_slider from "d3-simple-slider"
 import * as d3_drag from "d3-drag"
+import {create_max_pool_2d, createConv} from "./convIntro/tensor"
+import * as tf from "@tensorflow/tfjs";
 
 function load_img_channels(url, callback) {
     const canvas = document.getElementById('input-image');
@@ -63,7 +65,7 @@ function random_matrix(w, h) {
 }
 
 class Layer {
-    constructor(x, y, w, h, size, filters, filter_gap, kernel_size, no_overlap=false) {
+    constructor(x, y, w, h, size, filters, filter_gap, kernel_size, no_overlap=false, rad=Math.PI/4) {
         this.x = x
         this.y = y
         this.w = w
@@ -78,12 +80,12 @@ class Layer {
         this.prev_layer = null
         this.next_layer = null
 
-        this.is_current = false
+        this.data = null
 
         // Only allow this mode if kernel divides image size
         console.assert(!no_overlap || size / kernel_size - Math.floor(size / kernel_size) == 0)
 
-        this.rad = Math.PI / 4
+        this.rad = rad
     }
 
     static link_layers(layers) {
@@ -147,10 +149,6 @@ class Layer {
         return [index % this.size, this.size - 1 - Math.floor(index / this.size)]
     }
 
-    calc_output_size(input_size) {
-        return 1
-    }
-
     calc_cell_x_loc(col, filter_index) {
         let x_scale = Math.cos(this.rad)
         let cell_width = this.calc_cell_dims()[0]
@@ -163,14 +161,50 @@ class Layer {
         return this.y - row * cell_height - col * y_scale * cell_height
     }
 
-    draw_layer_connection(svg, cell_index, input_size=1) {
+    draw_layer_connection(svg, cell_in_index, cell_out_index, selected_filter_idx) {
+        let return_index = -1
+
+        // We are going backward and need to determine the index which
+        // generates cell_out_index
+        if (cell_in_index < 0) {
+            // This is unambiguous
+            if (!this.no_overlap) {
+                cell_in_index = cell_out_index
+            }
+            // In this case there are this.kernel possible return paths
+            // Resolve ambiguity manually by finding the original max
+            else {
+                let [col_out, row_out] = this.next_layer.calc_col_row(cell_out_index)
+
+                let kernel_col = col_out * this.kernel_size
+                let kernel_row = this.size - this.kernel_size - row_out * this.kernel_size
+
+                let o_x = 0
+                let o_y = 0
+                let m = -Infinity
+                for (let i = 0; i < this.kernel_size; ++i) {
+                    for (let j = 0; j < this.kernel_size; ++j) {
+                        let val = this.data[Math.min(selected_filter_idx, this.data.length - 1)][kernel_row+i][kernel_col+j]
+                        console.log(val)
+
+                        if (val > m) {
+                            m = val
+                            o_x = j
+                            o_y = i
+                        }
+                    }
+                }
+                
+                cell_in_index = (kernel_row + o_y) * this.size + kernel_col + o_x
+            }
+
+            return_index = cell_in_index
+        }
+
+
+        let [col, row] = this.calc_col_row(cell_in_index)
         let [cell_width, cell_height] = this.calc_cell_dims()
-
-        let x_scale = Math.cos(this.rad), y_scale = Math.sin(this.rad);
-
-        let [col, row] = this.calc_col_row(cell_index)
-        let output_size = this.calc_output_size(input_size)
-
+        
         let c = Math.floor((this.kernel_size-1)/2)
 
         let kernel_col = col - c
@@ -183,12 +217,8 @@ class Layer {
             kernel_col = Math.floor(col / this.kernel_size) * this.kernel_size
             kernel_row = Math.floor(row / this.kernel_size) * this.kernel_size
 
-            col_out = Math.floor(kernel_col / this.kernel_size)
-            row_out = Math.floor(kernel_row / this.kernel_size)
-        }
-
-        if (this.kernel_size == 4) {
-            console.log(kernel_col)
+            col_out = kernel_col / this.kernel_size
+            row_out = kernel_row / this.kernel_size
         }
 
         let color_1 = this.layer_index % 2 == 0 ? "#39FF14" : "red"
@@ -206,7 +236,7 @@ class Layer {
                                         cell_height * this.kernel_size,
                                         this.rad, 0, 0, null, 0, color_2, 1)
                                         .attr("pointer-events", "none")
-                                        .attr("id", "rf-" + this.layer_index + "-" + filter_idx)
+                                        .attr("id", "kernel-" + this.layer_index + "-" + filter_idx)
 
             let x_cell = this.calc_cell_x_loc(col, filter_idx)
             let y_cell = this.calc_cell_y_loc(col, row)
@@ -215,7 +245,7 @@ class Layer {
             // This is always just a pixel of size 1
             this.draw_3d_rect_vertical(svg.insert("polygon", "#outline-" + this.layer_index + "-" + (filter_idx + 1)),
             x_cell, y_cell, cell_width * 1, cell_height * 1, this.rad, 0, 0,
-                                    null, 0, color_1, 1).attr("pointer-events", "none").attr("id", "kernel-" + this.layer_index + "-" + filter_idx)
+                                    null, 0, color_1, 1).attr("pointer-events", "none").attr("id", "out-" + this.layer_index + "-" + filter_idx)
 
         
 
@@ -235,7 +265,7 @@ class Layer {
                 y_cell = this.calc_cell_y_loc(kernel_col + o_x * this.kernel_size, kernel_row + o_y * this.kernel_size)
 
                 // Connect kernel
-                svg.select("#connection-line-rf-" + this.layer_index + "-" + filter_idx + "-" + i).remove()
+                svg.select("#connection-line-kernel-" + this.layer_index + "-" + filter_idx + "-" + i).remove()
                 svg.insert("line", "#outline-" + this.layer_index + "-" + (filter_idx + 1))
                     .attr("x1", x_cell)
                     .attr("y1", y_cell)
@@ -246,7 +276,7 @@ class Layer {
                     .attr("stroke-dashoffset", 2)
                     .attr("stroke", color_2)
                     .attr("stroke-width", 2)
-                    .attr("id", "connection-line-rf-" + this.layer_index + "-" + filter_idx + "-" + i)
+                    .attr("id", "connection-line-kernel-" + this.layer_index + "-" + filter_idx + "-" + i)
 
                 x_cell = this.calc_cell_x_loc(col + o_x, filter_idx)
                 x_cell_next = this.calc_cell_x_loc(col + o_x, filter_idx + 1)
@@ -271,7 +301,7 @@ class Layer {
         let filter_idx = this.filters - 1
         
         if (this.next_layer == null)
-            return [-1, output_size]
+            return -1
 
         for (let i = 0; i < 4; ++i) {
             // Trick to do all of this in one loop. Generates -1 -1; -1, 1; 1, -1; 1, 1.
@@ -299,17 +329,19 @@ class Layer {
                 .attr("id", "connection-line-" + this.layer_index + "-" + filter_idx + "-" + i)
         }
 
-        return [this.next_layer != null ? (this.next_layer.size - 1 - row_out) * this.next_layer.size + col_out : -1, output_size]
+        let out_index = (this.next_layer.size - 1 - row_out) * this.next_layer.size + col_out
+        console.assert(cell_out_index < 0 || out_index == cell_out_index)
+        return return_index < 0 ? out_index : return_index
     }
 
     remove_layer_connection(svg) {
         for (let filter_idx = 0; filter_idx < this.filters; ++filter_idx) {
             svg.select("#kernel-" + this.layer_index + "-" + filter_idx).remove()
-            svg.select("#rf-" + this.layer_index + "-" + filter_idx).remove()
+            svg.select("#out-" + this.layer_index + "-" + filter_idx).remove()
 
             for (let i = 0; i < 4; ++i) {
                 svg.select("#connection-line-" + this.layer_index + "-" + filter_idx + "-" + i).remove()
-                svg.select("#connection-line-rf-" + this.layer_index + "-" + filter_idx + "-" + i).remove()
+                svg.select("#connection-line-kernel-" + this.layer_index + "-" + filter_idx + "-" + i).remove()
             }
         }
     }
@@ -328,7 +360,7 @@ class Layer {
         let [cell_width, cell_height] = this.calc_cell_dims()
         
         let layer = this
-
+        this.data = data
         for(let filter_idx = 0; filter_idx < this.filters; ++filter_idx) {
             // Remove previously drawn layer
             svg.selectAll(".layer-" + this.layer_index + "-" + filter_idx).remove();
@@ -337,10 +369,10 @@ class Layer {
             this.draw_3d_rect_vertical(svg.append("polygon"), this.x + this.filter_gap * filter_idx, this.y, this.w, this.h, this.rad, 0, 0, null, 0, "purple", 4)
                 .attr("id", "outline-" + this.layer_index + "-" + filter_idx)
             
-            let img = data == null ? random_matrix(this.size, this.size) : data[filter_idx]
-            
+            let d = data == null ? random_matrix(this.size, this.size) : data[filter_idx]
+
             svg.selectAll(".layer-" + this.layer_index + "-" + filter_idx)
-                .data(flatten(img))
+                .data(flatten(d))
                 .enter()
                 .append("polygon")
                 .attr("points", function(_, i) {
@@ -352,31 +384,41 @@ class Layer {
                 .attr("fill-opacity", 1)
                 .attr("fill", d => color_fn(d, filter_idx))
                 .style("cursor", "pointer")
-                .on("mouseover", function(d, i, b) {
-                    layer.is_current = true
+                .on("mouseover", function(d, i) {
                     d3.select(this).attr("fill", "yellow")
 
-
+                    // Forward
                     let idx = i
-                    let size = layer.kernel_size
                     let cur = layer
                     while (cur != null) {
-                        let result = cur.draw_layer_connection(svg, idx, size)
-                        idx = result[0]
-                        size = result[1]
-
+                        idx = cur.draw_layer_connection(svg, idx, -1, filter_idx)
                         cur = cur.next_layer
-                    }               
+                    }
+
+                    // Backward
+                    idx = i
+                    cur = layer.prev_layer
+                    while (cur != null) {
+                        idx = cur.draw_layer_connection(svg, -1, idx, filter_idx)
+                        cur = cur.prev_layer
+                    }
                 })
                 .on("mouseout", function(d) {
                     d3.select(this).attr("fill", color_fn(d, filter_idx))
-
+                    
+                    // Foward
                     let cur = layer
                     while (cur != null) {
                         cur.remove_layer_connection(svg)
                         cur = cur.next_layer
                     }
-                    layer.is_current = false
+
+                    // Backward
+                    cur = layer.prev_layer
+                    while (cur != null) {
+                        cur.remove_layer_connection(svg)
+                        cur = cur.prev_layer
+                    }
                 })
                 .classed("layer-" + layer.layer_index + "-" + filter_idx, true)
                 .exit();
@@ -385,8 +427,8 @@ class Layer {
 }
 
 
-function make_centered_layer(x, w, h, size, filters, filter_gap, kernel_size, no_overlap=false) {
-    return new Layer(x, h/2 * (1 + Math.SQRT1_2), w, h, size, filters, filter_gap, kernel_size, no_overlap)
+function make_centered_layer(x, w, h, size, filters, filter_gap, kernel_size, no_overlap=false, rad=Math.PI/4) {
+    return new Layer(x, h/2 * (1 + Math.SQRT1_2), w, h, size, filters, filter_gap, kernel_size, no_overlap, rad)
 }
 
 
@@ -395,56 +437,44 @@ function draw_cnn_vis(img) {
 
     let layers = []
 
-    let filter_gap = 32
+    let size = 256
+    let filter_gap = (size - 64) / 8
     let x_start = filter_gap
 
-    layers.push(make_centered_layer(x_start, 256, 256, 32, 3, filter_gap, 2, true))
-    layers.push(make_centered_layer(layers[0].x + layers[0].get_total_width() + filter_gap * 4, 128, 128, 16, 4, filter_gap, 3))
-    layers.push(make_centered_layer(layers[1].x + layers[1].get_total_width() + filter_gap * 4, 128, 128, 16, 8, filter_gap, 4, true))
-    layers.push(make_centered_layer(layers[2].x + layers[2].get_total_width() + filter_gap * 4, 64, 64, 4, 8, filter_gap, 4, true))
+    layers.push(make_centered_layer(x_start, size, size, 32, 3, filter_gap, 2, true))
+    layers.push(make_centered_layer(layers[0].x + layers[0].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 3, filter_gap, 3))
+    layers.push(make_centered_layer(layers[1].x + layers[1].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 8, filter_gap, 4, true))
+    layers.push(make_centered_layer(layers[2].x + layers[2].get_total_width() + filter_gap * 4, size / 4, size / 4, 4, 8, filter_gap, 4, true))
+    layers.push(make_centered_layer(layers[3].x + layers[3].get_total_width() + filter_gap * 4, size / 8, size / 8, 1, 10, size / 8 + 2, 1, true, Math.PI / 6))
 
     Layer.link_layers(layers)
 
     layers[0].draw(svg, img, Layer.d_to_rgb)
-    layers[1].draw(svg, null)
-    layers[2].draw(svg, null)
-    layers[3].draw(svg, null)
 
-    // ------- Layers -------
+    let pool_2d = create_max_pool_2d(2)
+    let pooled_tensor = pool_2d.apply(tf.tensor(img).expandDims(-1))
 
-    // for(let i = 0; i < 3; ++i) {
-    //     draw_img_3d_rect(svg, img[i], (i+1) * 25, 128 + 128 * Math.SQRT1_2, 256, 32, "white", i, gray_to_rgb)
-    // }
+    layers[1].draw(svg, pooled_tensor.squeeze(-1).arraySync(), Layer.d_to_rgb)
 
-    // for(let i = 0; i < 4; ++i) {
-    //     draw_img_3d_rect(svg, null, 300 + (i+1) * 25, 64 + 64 * Math.SQRT1_2, 128, 8, "#8A2BE2", i + 3, (d, _) => d3.rgb(d * 255, d * 255, d * 255))
-    // }
+    let convs = []
+    let kernels = ["x_sobel", "y_sobel", "edge_detection", "sharpen", "box_blur", "x_sobel", "y_sobel", "edge_detection"]
+    for(let i = 0; i < kernels.length; ++i) {
+        let conv = createConv([size / 2, size / 2, 1], config.kernels[kernels[i]], 1, 1, true)
+        let idx = (i + 2 - ((kernels.length - 1) % 3)) % 3 // Rig this mod so that we always get the blue channel for the last one, no matter how many kernels
+        let convolved = conv.apply(pooled_tensor.gather([idx])).squeeze(-1).arraySync()
+        convs.push(convolved[0])
+    }
 
-    // for(let i = 0; i < 8; ++i) {
-    //     draw_img_3d_rect(svg, null, 500 + (i+1) * 25, 32 + 32 * Math.SQRT1_2, 64, 4, "#8A2BE2", i + 7, (d, _) => d3.rgb(d * 255, d * 255, d * 255))
-    // }
+    layers[2].draw(svg, convs)
 
-    // for(let i = 0; i < 16; ++i) {
-    //     draw_img_3d_rect(svg, null, 800 + (i+1) * 16, 16 + 16 * Math.SQRT1_2, 32, 2, "#8A2BE2", i + 15, (d, _) => d3.rgb(d * 255, d * 255, d * 255))
-    // }
+    pool_2d = create_max_pool_2d(4)
+    pooled_tensor = pool_2d.apply(tf.tensor(convs).expandDims(-1))
 
-    // for(let i = 0; i < 10; ++i) {
-    //     draw_img_3d_rect(svg, [[i==0|0]], 1150 + (i+1) * 16, 8 + 8 * Math.SQRT1_2, 16, 1, "#8A2BE2", i + 31, (d, _) => d3.rgb(d * 255, d * 255, d * 255), 0)
-    // }
-
-    // let slider = d3_slider.sliderHorizontal().min(0).max(1).width(100).ticks(0).step(0.2).displayValue(false).on("onchange", m => {
-    //     for(let i = 0; i < 4; ++i) {
-    //         draw_img_3d_rect(svg, null, 300 + (i+1) * 25, 64 + 64 * Math.SQRT1_2, 128, 8, "#8A2BE2", i + 3, (d, _) => d3.rgb(d * 255, d * 255, d * 255))
-    //     }
-    // });
-
-    // ------- Connections -------
-
-    // draw_layer_connection(svg, 75, 128 + 128 * Math.SQRT1_2, 256, 256, 32, 325, 64 + 64 * Math.SQRT1_2, 128, 128, "red")
-    // draw_layer_connection(svg, 75, 128 + 128 * Math.SQRT1_2, 256, 256, 32, 325, 64 + 64 * Math.SQRT1_2, 128, 128, "green")
-    // draw_layer_connection(svg, 75, 128 + 128 * Math.SQRT1_2, 256, 256, 32, 325, 64 + 64 * Math.SQRT1_2, 128, 128, "blue")
-
-
+    layers[3].draw(svg, pooled_tensor.squeeze(-1).arraySync())
+    
+    
+    
+    layers[4].draw(svg, null)
 
     // ------- Sliders -------
 

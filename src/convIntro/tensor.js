@@ -50,3 +50,7 @@ export function createConv(inShape, kernel, stride, dialation, padded) {
         weights: [kernelTensor]
     });
 }
+
+export function create_max_pool_2d(size) {
+    return tf.layers.maxPooling2d({poolSize : size})
+}
