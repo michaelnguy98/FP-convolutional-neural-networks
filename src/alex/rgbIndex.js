@@ -5,14 +5,14 @@ function init() {
     d3.select("#rgbSection")
         .append("svg")
         .attr("width", window.innerWidth) // add width
-        .attr("height", 1000) // add height
+        .attr("height", 600) // add height
         .attr("id", "rgbMain")
         .append("g")
         .attr("width", window.innerWidth) // add width
-        .attr("height", 1000) // add height
+        .attr("height", 600) // add height
         .attr("id", "rgbG")
 
-    buildrgb("https://opengameart.org/sites/default/files/Pixel_Bird_png_0.png", x => drawRGB(x))
+    buildrgb("https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/truck.png", x => drawRGB(x))
 }
 
 function buildrgb(src, func) {
@@ -49,8 +49,43 @@ function buildrgb(src, func) {
 function drawRGB(img) {
     let g = d3.select("#rgbG")
 
+    g.selectAll("text")
+        .data([0, 0, 0])
+        .enter()
+        .append("text")
+        .attr("x", function(d, i) {
+            if (i == 0) {
+                return 110
+            }
+            if (i == 1) {
+                return 410
+            }
+            return 710
+        })
+        .attr("y", 290)
+        .attr("fill", function(d, i) {
+            if (i == 0) {
+                return "red"
+            }
+            if (i == 1) {
+                return "green"
+            }
+            return "blue"
+        })
+        .style("font", "bold 20px sans-serif")
+        .text(function(d, i) {
+            if (i == 0) {
+                return "( " + d + ","
+            }
+            if (i == 1) {
+                return d + ","
+            }
+            return d + " )"
+        })
+        .classed("text", true)
+
     let s = 256
-    let n = 64
+    let n = 32
     let w = s / n
     let h = s / n
     g.selectAll("squareO")
@@ -75,6 +110,20 @@ function drawRGB(img) {
         .style("cursor", "pointer")
         .on("mouseover", function(d, i) {
             d3.select(this).attr("stroke", "white")
+            let color = [d, 
+                img[1].reduce((a, b) => a.concat(b))[i],
+                img[2].reduce((a, b) => a.concat(b))[i]]
+            g.selectAll("text")
+                .data(color)
+                .text(function(d, i) {
+                    if (i == 0) {
+                        return "( " + d + ","
+                    }
+                    if (i == 1) {
+                        return d + ","
+                    }
+                    return d + " )"
+                })
             let nums = [0, 1, 2]
             g.selectAll("selected")
                 .data(nums)
@@ -129,6 +178,20 @@ function draw_box(g, img, x, y, s, n, index) {
         .style("cursor", "pointer")
         .on("mouseover", function(d, i) {
             d3.select(this).attr("stroke", "white")
+            let color = [img[0].reduce((a, b) => a.concat(b))[i], 
+                img[1].reduce((a, b) => a.concat(b))[i],
+                img[2].reduce((a, b) => a.concat(b))[i]]
+            g.selectAll("text")
+                .data(color)
+                .text(function(d, i) {
+                    if (i == 0) {
+                        return "( " + d + ","
+                    }
+                    if (i == 1) {
+                        return d + ","
+                    }
+                    return d + " )"
+                })
             let nums = [0, 1, 2]
             g.selectAll("selected")
                 .data(nums)
