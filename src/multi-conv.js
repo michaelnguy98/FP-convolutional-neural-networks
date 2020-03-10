@@ -149,7 +149,7 @@ export function drawButtons() {
     const buttonHeight = 50;
 
     const buttonX = startingConvX + (spacing * (3 - 1) + rectWidth) / 2 - buttonWidth / 2;
-    const buttonY = startingConvY + rectHeight + 50;
+    const buttonY = startingConvY + rectHeight + 75;
     
     // This is the Add Layer Button
     const addButtonWrapper = d3.select("#multiConvSvg")
@@ -245,7 +245,7 @@ export function drawText() {
     const imageHeight = 100; 
     
     let imageX = startingConvX + 75;
-    let imageY = startingConvY + rectHeight + 150;
+    let imageY = startingConvY + 100;
     
     const imageWrapper = d3.select("#multiConvSvg")
         .append("g")
