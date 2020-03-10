@@ -180,11 +180,15 @@ class Layer {
         let row_out = row
 
         if (this.no_overlap) {
-            kernel_col = Math.floor(col / this.kernel_size) * this.kernel_size + c
-            kernel_row = Math.floor(row / this.kernel_size) * this.kernel_size + c
+            kernel_col = Math.floor(col / this.kernel_size) * this.kernel_size
+            kernel_row = Math.floor(row / this.kernel_size) * this.kernel_size
 
             col_out = Math.floor(kernel_col / this.kernel_size)
             row_out = Math.floor(kernel_row / this.kernel_size)
+        }
+
+        if (this.kernel_size == 4) {
+            console.log(kernel_col)
         }
 
         let color_1 = this.layer_index % 2 == 0 ? "#39FF14" : "red"
@@ -396,8 +400,8 @@ function draw_cnn_vis(img) {
 
     layers.push(make_centered_layer(x_start, 256, 256, 32, 3, filter_gap, 2, true))
     layers.push(make_centered_layer(layers[0].x + layers[0].get_total_width() + filter_gap * 4, 128, 128, 16, 4, filter_gap, 3))
-    layers.push(make_centered_layer(layers[1].x + layers[1].get_total_width() + filter_gap * 4, 128, 128, 16, 8, filter_gap, 2, true))
-    layers.push(make_centered_layer(layers[2].x + layers[2].get_total_width() + filter_gap * 4, 64, 64, 8, 8, filter_gap, 3))
+    layers.push(make_centered_layer(layers[1].x + layers[1].get_total_width() + filter_gap * 4, 128, 128, 16, 8, filter_gap, 4, true))
+    layers.push(make_centered_layer(layers[2].x + layers[2].get_total_width() + filter_gap * 4, 64, 64, 4, 8, filter_gap, 4, true))
 
     Layer.link_layers(layers)
 
