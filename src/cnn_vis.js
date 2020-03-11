@@ -457,6 +457,16 @@ function shuffle(arr) {
     return arr
 }
 
+// // https://stackoverflow.com/questions/25582882/javascript-math-random-normal-distribution-gaussian-bell-curve
+// // Standard Normal variate using Box-Muller transform.
+// function random_normal(mean, sd) {
+//     var u = 0, v = 0;
+//     while(u == 0) u = Math.random();
+//     while(v == 0) v = Math.random();
+//     let result = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+//     return (result + mean) * sd
+// }
+
 function draw_cnn_vis(img) {
     let svg = d3.select("#cnn-vis")
 
@@ -501,11 +511,17 @@ function draw_cnn_vis(img) {
 
     network[2].draw(svg, pooled_tensor.squeeze(-1).arraySync())
     
-    
-    
     network[3].draw(svg, null)
 
     // ------- Sliders -------
+    let correct_index = 3
+
+    let initial_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1)
+    let index = Math.floor(Math.random() * 10)
+    while (index == correct_index)
+        index = Math.floor(Math.random() * 10)
+    initial_data[index] = Math.random() * 0.1 + 0.9
+    initial_data[correct_index] = Math.random() * 0.25 + 0.25
 
     let ticks = 40
     let range_half_size = ticks / 10
@@ -513,12 +529,13 @@ function draw_cnn_vis(img) {
     n += n % 2
 
     let down = n / 2 + ((n/2) % 2)
-    let delta_p = 0.5 / down
     let k = (1/2) * (n - down)
 
-
+    let deltas = initial_data.map(d => d / down)
+    deltas[correct_index] = deltas[correct_index] - 1/down
+    
     let moves_pre = [...Array(10)].map((_, i) => [0].concat(shuffle([...Array(n)].map((_, j) => {
-        let d = (i == 3) ? -delta_p : delta_p
+        let d = deltas[i]
         if (j < down + k) {
             return -d
         } else {
@@ -526,18 +543,25 @@ function draw_cnn_vis(img) {
         }
     }))))
 
+    let end_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.25, 1)
+    index = Math.floor(Math.random() * 10)
+    while (index == correct_index)
+        index = Math.floor(Math.random() * 10)
+    initial_data[index] = Math.random() * 0.1 + 0.9
+    end_data[correct_index] = Math.random() * 0.25 + 0.25 // Make this one extra low, [0.25, 0.5)
     let n_post = ticks - n
     let down_post = n_post / 2 + ((n_post/2) % 2)
-    let delta_p_post = 0.5 / down_post
     let k_post = (1/2) * (n_post - down_post)
 
-    let moves_post = [...Array(10)].map((_, i) => shuffle([...Array(n_post)].map((_, j) => {
-        let d = (i == 3) ? delta_p_post : -delta_p_post
+    let deltas_post = end_data.map(d => d / down_post)
+    deltas_post[correct_index] = deltas_post[correct_index] - 1/down_post
 
+    let moves_post = [...Array(10)].map((_, i) => shuffle([...Array(n_post)].map((_, j) => {
+        let d = deltas_post[i]
         if (j < down_post + k_post) {
-            return -d
-        } else {
             return d
+        } else {
+            return -d
         }
     })))
 
@@ -547,7 +571,7 @@ function draw_cnn_vis(img) {
     // Need to precompute these since ticks get skipped apparently...
 
     let data = [...Array(ticks + 1)]
-    data[0] = [...Array(10)].map(() => 0.5)
+    data[0] = initial_data
     for (let i = 1; i <= ticks; ++i) {
         let copy = data[i - 1].slice(0)
 
