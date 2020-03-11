@@ -210,7 +210,7 @@ function updateData() {
         kernel_name = slides[slide_idx].kernel;
     }
     if (slide_idx == 0) {
-        kernel = [[0,1,0],[1,2,1],[0,1,0]];
+        kernel = [[0,1,0],[1,5,1],[0,1,0]];
     } else {
         kernel = config.kernels[kernel_name];
     }
