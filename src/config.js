@@ -19,6 +19,7 @@ export const highlightColorOut = "red";
 
 export const nextColor = d3.rgb(61, 195, 122);
 export const prevColor = d3.rgb(255, 178, 206);
+export const disableColor = "gray";
 
 export const convolveColor = nextColor;
 export const stopColor = prevColor;

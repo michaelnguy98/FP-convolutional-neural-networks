@@ -194,11 +194,19 @@ function updateFrame(useTransition = true) {
 
 function disableButton() {
     d3.select("#animateRGBSvg")
+        .select("#buttonColor")
+        .attr("fill", config.disableColor);
+
+    d3.select("#animateRGBSvg")
         .select("#buttonWrapper")
         .style("cursor", "default")
         .on("click", () => {});
 }
 function enableButton() {
+    d3.select("#animateRGBSvg")
+        .select("#buttonColor")
+        .attr("fill", config.nextColor);
+
     d3.select("#animateRGBSvg")
         .select("#buttonWrapper")
         .style("cursor", "pointer")

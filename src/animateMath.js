@@ -420,10 +420,16 @@ function drawFrame(useTransition = true) {
 
 function disableButtons() {
     d3.select("#animateMathSvg")
+        .select("#prevButtonColor")
+        .attr("fill", config.disableColor);
+    d3.select("#animateMathSvg")
+        .select("#nextButtonColor")
+        .attr("fill", config.disableColor);
+    
+    d3.select("#animateMathSvg")
         .select("#prevButtonWrapper")
         .style("cursor", "default")
         .on("click", () => {});
-
     d3.select("#animateMathSvg")
         .select("#nextButtonWrapper")
         .style("cursor", "default")
@@ -432,10 +438,16 @@ function disableButtons() {
 
 function enableButtons() {
     d3.select("#animateMathSvg")
+        .select("#prevButtonColor")
+        .attr("fill", config.prevColor);
+    d3.select("#animateMathSvg")
+        .select("#nextButtonColor")
+        .attr("fill", config.nextColor);
+    
+    d3.select("#animateMathSvg")
         .select("#prevButtonWrapper")
         .style("cursor", "pointer")
         .on("click", prevFrame);
-
     d3.select("#animateMathSvg")
         .select("#nextButtonWrapper")
         .style("cursor", "pointer")
