@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import * as config from "./config";
 import * as d3_slider from "d3-simple-slider"
 import * as d3_drag from "d3-drag"
-import {create_max_pool_2d, createConv} from "./convIntro/tensor"
+import {create_max_pool_2d, create_average_pool_2d, createConv} from "./convIntro/tensor"
 import * as tf from "@tensorflow/tfjs";
 
 function load_img_channels(url, callback) {
@@ -180,21 +180,23 @@ class Layer {
                 let kernel_col = col_out * this.kernel_size
                 let kernel_row = this.size - this.kernel_size - row_out * this.kernel_size
 
+                let out_val = this.next_layer.data[selected_filter_idx][this.next_layer.data[selected_filter_idx].length - 1 - row_out][col_out]
+
                 let o_x = 0
                 let o_y = 0
-                let m = -Infinity
+                let min_delta = Infinity
                 for (let i = 0; i < this.kernel_size; ++i) {
                     for (let j = 0; j < this.kernel_size; ++j) {
-                        let val = this.data[Math.min(selected_filter_idx, this.data.length - 1)][kernel_row+i][kernel_col+j]
-
-                        if (val > m) {
-                            m = val
+                        let val = this.data[selected_filter_idx % this.data.length][kernel_row+i][kernel_col+j]
+                        
+                        if (Math.abs(val - out_val) < min_delta) {
+                            min_delta = Math.abs(val - out_val)
                             o_x = j
                             o_y = i
                         }
                     }
                 }
-                
+
                 cell_in_index = (kernel_row + o_y) * this.size + kernel_col + o_x
             }
 
@@ -370,6 +372,7 @@ class Layer {
         for(let filter_idx = 0; filter_idx < this.filters; ++filter_idx) {
             // Remove previously drawn layer
             svg.selectAll(".layer-" + this.layer_index + "-" + filter_idx).remove();
+            svg.selectAll("#outline-" + this.layer_index + "-" + filter_idx).remove();
 
             // Draw outline
             this.draw_3d_rect_vertical(svg.append("polygon"), this.x + this.filter_gap * filter_idx, this.y, this.w, this.h, this.rad, 0, 0, null, 0, "purple", 4)
@@ -437,10 +440,10 @@ function make_centered_layer(x, w, h, size, filters, filter_gap, kernel_size, no
     return new Layer(x, h/2 * (1 + Math.SQRT1_2), w, h, size, filters, filter_gap, kernel_size, no_overlap, rad)
 }
 
-function softmax(nums) {
-    // let exp = nums.map(n => Math.exp(n))
-    // let sum = exp.reduce((prev, cur) => prev + cur)
-    // return exp.map(e => e / sum)
+function soft(nums) {
+    let exp = nums.map(n => Math.exp(n * 16))
+    let sum = exp.reduce((prev, cur) => prev + cur)
+    return exp.map(e => e / sum)
 
     let max = Math.max.apply(null, nums)
     return nums.map(n => n / max)
@@ -506,7 +509,7 @@ function draw_cnn_vis(img) {
 
     network[1].draw(svg, convs)
 
-    pool_2d = create_max_pool_2d(4)
+    pool_2d = create_average_pool_2d(4)
     pooled_tensor = pool_2d.apply(tf.tensor(convs).expandDims(-1))
 
     network[2].draw(svg, pooled_tensor.squeeze(-1).arraySync())
@@ -516,12 +519,16 @@ function draw_cnn_vis(img) {
     // ------- Sliders -------
     let correct_index = 3
 
-    let initial_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1)
+    let initial_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.1, 1)
+
+    // Randomly select another index to have high probability, [0.9, 1), just to make sure
+    // there is at least one high prediction
     let index = Math.floor(Math.random() * 10)
     while (index == correct_index)
         index = Math.floor(Math.random() * 10)
     initial_data[index] = Math.random() * 0.1 + 0.9
-    initial_data[correct_index] = Math.random() * 0.25 + 0.25
+
+    initial_data[correct_index] = Math.random() * 0.25 + 0.25 // Make this one extra low, [0.25, 0.5)
 
     let ticks = 40
     let range_half_size = ticks / 10
@@ -543,11 +550,15 @@ function draw_cnn_vis(img) {
         }
     }))))
 
-    let end_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.25, 1)
+    let end_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.1, 1)
+
+    // Randomly select another index to have high probability, [0.9, 1), just to make sure
+    // there is at least one high prediction
     index = Math.floor(Math.random() * 10)
     while (index == correct_index)
         index = Math.floor(Math.random() * 10)
-    initial_data[index] = Math.random() * 0.1 + 0.9
+    end_data[index] = Math.random() * 0.1 + 0.9
+
     end_data[correct_index] = Math.random() * 0.25 + 0.25 // Make this one extra low, [0.25, 0.5)
     let n_post = ticks - n
     let down_post = n_post / 2 + ((n_post/2) % 2)
@@ -569,17 +580,16 @@ function draw_cnn_vis(img) {
     
 
     // Need to precompute these since ticks get skipped apparently...
-
-    let data = [...Array(ticks + 1)]
-    data[0] = initial_data
+    let layer_3_data = [...Array(ticks + 1)]
+    layer_3_data[0] = initial_data
     for (let i = 1; i <= ticks; ++i) {
-        let copy = data[i - 1].slice(0)
+        let copy = layer_3_data[i - 1].slice(0)
 
         for (let j = 0; j < 10; ++j) {
             copy[j] += moves[j][i]
         }
 
-        data[i] = copy
+        layer_3_data[i] = copy
     }
     
     let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x  + network[3].get_total_width() - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
@@ -587,17 +597,33 @@ function draw_cnn_vis(img) {
             return
         }
 
-        // for (let i = 0; i < 10; ++i) {
-        //     if (this.prev == undefined || s > this.prev) {
-        //         data[i] += moves[i][s]
-        //     } else {
-        //         data[i] -= moves[i][s+1]
-        //     }
-        // }
+        let scale = Math.min(n, ticks - n)
 
-        let cur_data = data[s]
+        // Probability of randomly re-assigning a given pixel
+        let p = Math.abs(s - n) / scale
+
+        // Scramble layer 1
+        let layer_1_data = network[1].original_data
+        let layer_1_scramble = [...Array(layer_1_data.length)].map(() => random_matrix(layer_1_data[0][0].length, layer_1_data[0].length))
         
-        network[3].redraw(svg, cur_data.map(d => [d * 255]))
+        for (let i = 0; i < layer_1_data.length; ++i) {
+            for (let j = 0; j < layer_1_data[i].length; ++j) {
+                for (let k = 0; k < layer_1_data[i][j].length; ++k) {
+                    if (Math.random() >= p) {
+                        layer_1_scramble[i][j][k] = layer_1_data[i][j][k]
+                    }
+                }
+            }
+        }
+
+        network[1].redraw(svg, layer_1_scramble)
+
+        // Still have the right pooling layer stored...
+        let pooled_scramble = pool_2d.apply(tf.tensor(layer_1_scramble).expandDims(-1))
+        network[2].redraw(svg, pooled_scramble.squeeze(-1).arraySync())
+
+
+        network[3].redraw(svg, layer_3_data[s].map(d => [d * 255]))
 
         this.prev = s
     });
