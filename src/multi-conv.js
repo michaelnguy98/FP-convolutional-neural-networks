@@ -8,10 +8,36 @@ import puppySobel from "../Images/puppySobel.png";
 import puppySobelConv from "../Images/puppySobelConv.png";
 import puppyOutput from "../Images/puppyOutput.png";
 
+/**
+ * State of the visualization. Number of layers
+ */
 let numLayers = 0;
 
-const borderWidth = 900;
-const borderHeight = 900;
+/**
+ * Proportions of the SVG
+ */
+let svgWidth = 900;
+let svgHeight = svgWidth / 3;
+
+/**
+ * Proportions of the description text
+ */
+let textSectionWidth = svgWidth;
+let textSectionHeight = svgHeight / 4;
+
+let textSectionX = 0;
+let textSectionY = svgHeight / 2;
+
+let textX = textSectionWidth / 2;
+let textY = textSectionY + textSectionHeight / 2;
+
+/**
+ * Proportions of the buttons
+ */
+let buttonSectionWidth = svgWidth;
+let buttonSectionHeight = textSectionHeight;
+
+
 
 const fontSize = 30;
 
@@ -21,7 +47,15 @@ const rectHeight = 140;
 const startingConvX = 50;
 const startingConvY = 50;
 
-const spacing = 120;
+const spacing = 220;
+const lineLength = 75;
+const imageWidth = 100;
+const imageHeight = 100;
+
+const widthPadding = startingConvX;
+
+const borderWidth = widthPadding + 805 + widthPadding;
+const borderHeight = 900;
 
 export function initMultiConvSection() {
     initSVG();
@@ -40,6 +74,18 @@ export function initSVG() {
         .attr("id", "multiConvSvg")
         .attr("width", borderWidth)
         .attr("height", borderHeight);
+    
+    // arrow
+    d3.select("#multiConvSvg").append("svg:defs").append("svg:marker")
+        .attr("id", "triangle")
+        .attr("refX", 0)
+        .attr("refY", 3)
+        .attr("markerWidth", 10)
+        .attr("markerHeight", 10)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,0 L0,6 L9,3 z")
+        .style("stroke", "black");
 }
 
 /**
@@ -59,28 +105,18 @@ export function drawConvLayers() {
         .data(data)
         .enter()
         .append("g")
+        .attr("transform", (_, i) => `translate(${180 + (225 * i)}, ${startingConvY - 20})`)
+        .attr("opacity", 0.5)
         .classed("convLayerWrapper", true);
 
-    // arrow
-    convLayerWrappers.append("svg:defs").append("svg:marker")
-        .attr("id", "triangle")
-        .attr("refX", 0)
-        .attr("refY", 3)
-        .attr("markerWidth", 10)
-        .attr("markerHeight", 10)
-        .attr("orient", "auto")
-        .append("path")
-        .attr("d", "M0,0 L0,6 L9,3 z")
-        .style("stroke", "black");
-    
     const startLayers = startingConvX + 120
     
     //line              
     convLayerWrappers.append("line")
-        .attr("x1", (_, i) => startLayers + (spacing + 100) * i)
-        .attr("y1", 100)
-        .attr("x2", (_, i) => startLayers + (spacing + 100) * i + 75)
-        .attr("y2", 100)          
+        .attr("x1", 0)
+        .attr("y1", 70)
+        .attr("x2", lineLength)
+        .attr("y2", 70)          
         .attr("stroke-width", 1)
         .attr("stroke", "black")
         .attr("marker-end", "url(#triangle)")
@@ -88,8 +124,8 @@ export function drawConvLayers() {
 
     //text
     convLayerWrappers.append("text")
-        .attr("x", (_, i) => startLayers + (spacing + 100) * i + 40)
-        .attr("y", 75)
+        .attr("x", 40)
+        .attr("y", 55)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
@@ -97,16 +133,14 @@ export function drawConvLayers() {
         .attr("pointer-events", "none")
         .text("Convolution");
 
-    const imageWidth = 100;
-    const imageHeight = 100; 
-
     //image
     convLayerWrappers.append("svg:image")
-        .attr("x", (_, i) => startLayers + (spacing + 100) * i + 105)
-        .attr("y", startingConvY)
+        .attr("x", 105)
+        .attr("y", 20)
         .attr("width", imageWidth)
         .attr("height", imageHeight)
         .attr("stroke", "black")
+        .attr("image-rendering", "pixelated")
         .attr('xlink:href', (_, i) => {
             let img;
             if (i+1 == 1) {
@@ -122,8 +156,8 @@ export function drawConvLayers() {
     const imageY = startingConvY;
 
     convLayerWrappers.append("text")
-        .attr("x", (_, i) => startLayers + (spacing + 100) * i + 105 + imageWidth / 2)
-        .attr("y", imageY - imageHeight / 10)
+        .attr("x", 155)
+        .attr("y", 10)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
@@ -209,8 +243,6 @@ export function drawButtons() {
  * Draws the image and text
  */
 export function drawInputImage() {
-    const imageWidth = 100;
-    const imageHeight = 100; 
     
     let imageX = startingConvX;
     let imageY = startingConvY;
@@ -317,14 +349,14 @@ export function updateState(action) {
     let txt;
     let txt2;
     if (numLayers == 1) {
-        txt = "Parts of the puppy seem to be more prominent.";
+        txt = "Certain features of the puppy are being highlighted.";
         txt2 = "Let's apply another convolution!";
     } else if (numLayers == 2) {
-        txt = "A region around the feet and legs are being highlighted.";
-        txt2 = "Let's apply another convolution!";
+        txt = "The eyes seem to have a lot more prominence with a";
+        txt2 = "little bit of noise around the feet. Let's apply another convolution!";
     } else if (numLayers == 3) {
-        txt = "The eyes of the puppy are highlighted the most.";
-        txt2 = "Maybe our network is searching for these kinds of features...";
+        txt = "The region most prominent corresponds to the eyes of the puppy.";
+        txt2 = "Our network seems to be searching for these kinds of features...";
     } else {
         txt = "Here is the puppy image.";
         txt2 = "Let's apply a convolution to it!";
