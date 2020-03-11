@@ -1,11 +1,16 @@
 import * as d3 from "d3";
 import * as config from './config';
 
+/**
+ * Instantiate this section
+ */
 export function initAnimateMathSection() {
     initSVG();
     drawFrame(false);
 }
 
+// Frame data
+// Each frame is represented by the matrices visible, separator used, and whether to use color instead of text.
 let curFrame = 0;
 const frames = [
     {
@@ -74,8 +79,31 @@ const frames = [
     }
 ];
 
+/** The number of cells wide the gap between matricies is */
 const gapSize = 1;
 
+/** The duration of the animation moving cells */
+const moveAnimationDuration = 1500;
+/** The duration of the animation changing text & coloring cells */
+const textAnimationDuration = 1500;
+
+/** Width of cells, height of cells, font size of cells */
+const cellWidth = config.kernelCellWidth;
+const cellHeight = config.kernelCellHeight;
+const fontSize = config.fontSize * 1.5;
+    
+const buttonWidth = config.cellWidth * 5;
+const buttonHeight = config.cellHeight * 2;
+const buttonGap = cellHeight;
+
+const leftMargin = cellWidth;
+const topMargin = cellHeight;
+
+// Find the maximums of the frame data:
+//   Largest total number of cells
+//   Largest number of matricies
+//   Largest number of rows
+//   Largest number of columns(including gaps between matricies)
 let maxNumCells = 0;
 let maxNumMats = 0;
 let maxNumRows = 0;
@@ -95,9 +123,20 @@ for (const frame of frames) {
     }
 }
 
+/**
+ * Flattens a 3D array into a 1D array.
+ * 
+ * @param {any[][][]} a 
+ */
 function flattenArray(a) {
     return a.flat().flat();
 }
+/**
+ * Stolen from stackoverflow. Check if two arrays are equal(order matters).
+ * 
+ * @param {any[]} a 
+ * @param {any[]} b 
+ */
 function arraysEqual(a, b) {
   if (a === b) return true;
   if (a == null || b == null) return false;
@@ -109,29 +148,19 @@ function arraysEqual(a, b) {
   return true;
 }
 
+// Pad the cell data for each frame to each have the length of the largest frame.
+// Data is padded with "" on the left side.
 for (const frame of frames) {
     const flat = flattenArray(frame.matrices);
     const paddedCells = Array(maxNumCells - flat.length).fill('').concat(flat);
     frame.paddedCells = paddedCells;
 }
 
-const moveAnimationDuration = 1500;
-const textAnimationDuration = 1500;
-
-const cellWidth = config.kernelCellWidth;
-const cellHeight = config.kernelCellHeight;
-const fontSize = config.fontSize * 1.5;
-    
-const buttonWidth = config.cellWidth * 5;
-const buttonHeight = config.cellHeight * 2;
-const buttonGap = cellHeight;
-
-const leftMargin = cellWidth;
-const topMargin = cellHeight;
-
+// Width and height of the svg
 const svgWidth = leftMargin * 2 + maxNumCols * cellWidth;
 const svgHeight = topMargin * 2 + maxNumRows * cellHeight + buttonGap + buttonHeight;
 
+// The cell data that was rendered in the previous frame
 let prevCells = [];
 
 /**
@@ -144,6 +173,7 @@ function initSVG() {
         .attr("width", svgWidth)
         .attr("height", svgHeight);
 
+    // Group for separators(behind the cells)
     const separators = root.append("g").attr("id", "separators");
     separators.selectAll(".separator")
         .data(Array(maxNumMats - 1))
@@ -157,7 +187,6 @@ function initSVG() {
         .attr("font-size", fontSize)
         .classed("separator", true);
     
-
     // Cell Wrappers
     const wrappers = root.selectAll(".cellWrapper")
         .data(Array(maxNumCells))
@@ -165,7 +194,6 @@ function initSVG() {
         .append("g")
         .attr("transform", `translate(${-svgWidth}, ${-svgHeight})`)
         .classed("cellWrapper", true);
-    
     // Cell Color and Outline
     wrappers.append("rect")
         .attr("width", cellWidth)
@@ -174,7 +202,6 @@ function initSVG() {
         .attr("stroke", config.borderColor)
         .attr("stroke-width", config.borderWidth)
         .classed("cellColor", true);
-
     // Cell Text
     wrappers.append("text")
         .attr("x", cellWidth / 2)
@@ -231,7 +258,33 @@ function initSVG() {
         .text("Next");
 }
 
+/**
+ * Draw the current frame
+ */
 function drawFrame(useTransition = true) {
+    disableButtons();
+
+    // Hide/Show buttons
+    if (curFrame <= 0) {
+        d3.select("#animateMathSvg")
+            .select("#prevButtonWrapper")
+            .attr("visibility", "hidden");
+    } else {
+        d3.select("#animateMathSvg")
+            .select("#prevButtonWrapper")
+            .attr("visibility", "visible");
+    }
+
+    if (curFrame >= frames.length - 1) {
+        d3.select("#animateMathSvg")
+            .select("#nextButtonWrapper")
+            .attr("visibility", "hidden");
+    } else {
+        d3.select("#animateMathSvg")
+            .select("#nextButtonWrapper")
+            .attr("visibility", "visible");
+    }
+
     let t;
 
     const frameData = frames[curFrame];
@@ -242,7 +295,7 @@ function drawFrame(useTransition = true) {
 
     t = useTransition ?
         d3.transition().duration(moveAnimationDuration).ease(d3.easeCubic) :
-        null;
+        d3.transition().duration(0);
 
     d3.select("#animateMathSvg")
         .selectAll(".cellWrapper")
@@ -256,11 +309,12 @@ function drawFrame(useTransition = true) {
             const colI = (Math.floor(i % (frameData.matrices[0].length * frameData.matrices[0][0].length))) % frameData.matrices[0][0].length;
 
             const matrixGap = frameData.separator !== null ?
-                                cellWidth * (frameData.matrices[0][0].length + 1) :
+                                cellWidth * (frameData.matrices[0][0].length + gapSize) :
                                 0;
 
             return `translate(${leftPadding + matrixI * matrixGap + colI * cellWidth}, ${topPadding + rowI * cellHeight})`;
-        });
+        })
+        .on("end", enableButtons);
 
     d3.select("#separators")
         .selectAll(".separator")
@@ -271,7 +325,7 @@ function drawFrame(useTransition = true) {
                 return svgWidth / 2;
             } else {
                 i = i % (frameData.matrices.length - 1);
-                return leftPadding + (cellWidth * frameData.matrices[0][0].length) * (i + 1) + (cellWidth * i) + cellWidth / 2
+                return leftPadding + (cellWidth * frameData.matrices[0][0].length) * (i + 1) + (cellWidth * gapSize * (i + 0.5));
             }
         })
         .attr("y", topPadding + (cellHeight * frameData.matrices[0].length) / 2)
@@ -280,7 +334,7 @@ function drawFrame(useTransition = true) {
     if (frameData.colored) {
         t = useTransition ?
             d3.transition().duration(moveAnimationDuration).ease(d3.easeCubic):
-            null;
+            d3.transition().duration(0);
 
         d3.select("#animateMathSvg")
             .selectAll(".cellColor")
@@ -316,7 +370,7 @@ function drawFrame(useTransition = true) {
         if (!arraysEqual(frameData.paddedCells, prevCells)) {
             t = useTransition ?
                 d3.transition().duration(textAnimationDuration / 2).ease(d3.easeCubic):
-                null;
+                d3.transition().duration(0);
 
             d3.select("#animateMathSvg")
                 .selectAll(".cellColor")
@@ -334,7 +388,7 @@ function drawFrame(useTransition = true) {
             function appearText() {
                 t = useTransition ?
                     d3.transition().duration(textAnimationDuration / 2).ease(d3.easeCubic):
-                    null;
+                    d3.transition().duration(0);
                 d3.select("#animateMathSvg")
                     .selectAll(".cellText")
                     .data(frameData.paddedCells)
@@ -347,7 +401,7 @@ function drawFrame(useTransition = true) {
         } else {
             t = useTransition ?
                 d3.transition().duration(textAnimationDuration).ease(d3.easeCubic):
-                null;
+                d3.transition().duration(0);
 
             d3.select("#animateMathSvg")
                 .selectAll(".cellColor")
@@ -359,14 +413,38 @@ function drawFrame(useTransition = true) {
                 .selectAll(".cellText")
                 .data(frameData.paddedCells)
                 .transition(t)
-                .attr("fill", "black")
-                .on("end", appearText);
+                .attr("fill", "black");
         }
     }
 }
 
+function disableButtons() {
+    d3.select("#animateMathSvg")
+        .select("#prevButtonWrapper")
+        .style("cursor", "default")
+        .on("click", () => {});
+
+    d3.select("#animateMathSvg")
+        .select("#nextButtonWrapper")
+        .style("cursor", "default")
+        .on("click", () => {});
+}
+
+function enableButtons() {
+    d3.select("#animateMathSvg")
+        .select("#prevButtonWrapper")
+        .style("cursor", "pointer")
+        .on("click", prevFrame);
+
+    d3.select("#animateMathSvg")
+        .select("#nextButtonWrapper")
+        .style("cursor", "pointer")
+        .on("click", nextFrame);
+}
+
 function prevFrame() {
     --curFrame;
+
     drawFrame();
 }
 function nextFrame() {
