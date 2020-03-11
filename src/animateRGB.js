@@ -1,8 +1,8 @@
 import * as d3 from "d3";
 import * as config from './config';
-import birdRed from '../Images/birdRed.png';
-import birdGreen from '../Images/birdGreen.png';
-import birdBlue from '../Images/birdBlue.png';
+import redChannel from '../Images/dogR.png';
+import greenChannel from '../Images/dogG.png';
+import blueChannel from '../Images/dogB.png';
 
 export function initAnimateRGBSection() {
     initSVG();
@@ -68,7 +68,7 @@ function initSVG() {
         .attr("width", imgWidth)
         .attr("height", imgHeight)
         .attr("image-rendering", "pixelated")
-        .attr("xlink:href", birdRed)
+        .attr("xlink:href", redChannel)
         .style("mix-blend-mode", "screen");
     root.append("svg:image")
         .attr("id", "imgG")
@@ -77,7 +77,7 @@ function initSVG() {
         .attr("width", imgWidth)
         .attr("height", imgHeight)
         .attr("image-rendering", "pixelated")
-        .attr("xlink:href", birdGreen)
+        .attr("xlink:href", greenChannel)
         .style("mix-blend-mode", "screen");
     root.append("svg:image")
         .attr("id", "imgB")
@@ -86,7 +86,7 @@ function initSVG() {
         .attr("width", imgWidth)
         .attr("height", imgHeight)
         .attr("image-rendering", "pixelated")
-        .attr("xlink:href", birdBlue)
+        .attr("xlink:href", blueChannel)
         .style("mix-blend-mode", "screen");
 
     // Button Wrapper
