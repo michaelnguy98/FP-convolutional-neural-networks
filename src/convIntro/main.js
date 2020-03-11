@@ -472,6 +472,6 @@ export function initConvIntroSection() {
     initControls();
     initKernelPreviews();
     updateData();
-    
+
     initButtons();
 }
