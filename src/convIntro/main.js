@@ -407,6 +407,40 @@ export function initButtons() {
  * This function will run when the document has loaded.
  */
 export function initConvIntroSection() {
+    const selectionWrapper = d3.select("#convIntroSection")
+        .append("div")
+        .attr("id", "selectionWrapper")
+        .style("display", "flex")
+        .style("padding", 0)
+        .style("visibility", "hidden");
+    const thumbs = selectionWrapper.append("div")
+        .attr("id", "thumbs")
+        .style("padding-right", "1em");
+    const hiddenPadding = thumbs.append("div");
+    hiddenPadding.append("p")
+        .style("font-size", "var(--kernelThumbFont")
+        .style("margin-block-start", 0)
+        .style("margin-block-end", 0)
+        .style("visibility", "hidden")
+        .text("-");
+    hiddenPadding.append("p")
+        .style("font-size", "var(--kernelThumbFont")
+        .style("margin-block-start", 0)
+        .style("margin-block-end", 0)
+        .style("visibility", "hidden")
+        .text("-");
+    const imgUrls = Object.values(config.imageUrls);
+    for (let i = 0; i < imgUrls.length; ++i) {
+        const img = thumbs.append("img")
+            .classed("thumbnail", true)
+            .attr("src", imgUrls[i]);
+        if (i === 0) {
+            img.classed("selected", true);
+        }
+    }
+    selectionWrapper.append("div")
+        .attr("id", "kernels");
+
     document.documentElement.style.setProperty('--thumbSize', `${config.cellWidth * 3 + 3 * 2 + 2 * 3}px`);
     document.documentElement.style.setProperty('--kernelThumbSize', `${config.cellWidth}px`);
     document.documentElement.style.setProperty('--kernelThumbFont', `${config.fontSize}px`);
