@@ -527,6 +527,9 @@ function draw_cnn_vis(img) {
         .attr("id", "slider-3")
         .call(conv_1_slider);
 
+    conv_1_slider.silentValue(0.1)
+    conv_1_slider.value(0)
+
     // d3.select("#cnn-vis-main")
     //     .append("g")
     //     .attr("transform", "translate(575, 100)")
