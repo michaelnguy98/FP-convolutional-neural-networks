@@ -413,9 +413,11 @@ export function initConvIntroSection() {
         .style("display", "flex")
         .style("padding", 0)
         .style("visibility", "hidden");
+    selectionWrapper.append("div")
+        .style("width", config.cellWidth);
     const thumbs = selectionWrapper.append("div")
         .attr("id", "thumbs")
-        .style("padding-right", "1em");
+        .style("width", config.img_width);
     const hiddenPadding = thumbs.append("div");
     hiddenPadding.append("p")
         .style("font-size", "var(--kernelThumbFont")
@@ -439,7 +441,12 @@ export function initConvIntroSection() {
         }
     }
     selectionWrapper.append("div")
+        .style("width", config.spaceBetween);
+    selectionWrapper.append("div")
+        .style("width", config.img_width)
         .attr("id", "kernels");
+    selectionWrapper.append("div")
+        .style("width", config.cellWidth);
 
     document.documentElement.style.setProperty('--thumbSize', `${config.cellWidth * 3 + 3 * 2 + 2 * 3}px`);
     document.documentElement.style.setProperty('--kernelThumbSize', `${config.cellWidth}px`);
