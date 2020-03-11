@@ -437,6 +437,25 @@ function make_centered_layer(x, w, h, size, filters, filter_gap, kernel_size, no
     return new Layer(x, h/2 * (1 + Math.SQRT1_2), w, h, size, filters, filter_gap, kernel_size, no_overlap, rad)
 }
 
+function softmax(nums) {
+    // let exp = nums.map(n => Math.exp(n))
+    // let sum = exp.reduce((prev, cur) => prev + cur)
+    // return exp.map(e => e / sum)
+
+    let max = Math.max.apply(null, nums)
+    return nums.map(n => n / max)
+}
+
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; --i) {
+        let swap_idx = Math.floor(Math.random() * (i+1))
+        let tmp = arr[swap_idx]
+        arr[swap_idx] = arr[i]
+        arr[i] = tmp
+    }
+
+    return arr
+}
 
 function draw_cnn_vis(img) {
     let svg = d3.select("#cnn-vis")
@@ -448,10 +467,9 @@ function draw_cnn_vis(img) {
     let x_start = filter_gap
 
     network.push(make_centered_layer(x_start, size, size, 32, 3, filter_gap, 2, true))
-    network.push(make_centered_layer(network[0].x + network[0].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 3, filter_gap, 3))
-    network.push(make_centered_layer(network[1].x + network[1].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 8, filter_gap, 4, true))
-    network.push(make_centered_layer(network[2].x + network[2].get_total_width() + filter_gap * 4, size / 4, size / 4, 4, 8, filter_gap, 4, true))
-    network.push(make_centered_layer(network[3].x + network[3].get_total_width() + filter_gap * 4, size / 8, size / 8, 1, 10, size / 8 + 2, 1, true, Math.PI / 6))
+    network.push(make_centered_layer(network[0].x + network[0].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 8, filter_gap, 4, true))
+    network.push(make_centered_layer(network[1].x + network[1].get_total_width() + filter_gap * 4, size / 4, size / 4, 4, 8, filter_gap, 4, true))
+    network.push(make_centered_layer(network[2].x + network[2].get_total_width() + filter_gap * 4, size / 8, size / 8, 1, 10, size / 8 + 2, 1, true, Math.PI / 6))
 
     // Make svg/g container large enough to fit network
     let w = network[network.length - 1].x + network[network.length - 1].get_total_width() + filter_gap
@@ -467,8 +485,6 @@ function draw_cnn_vis(img) {
     let pool_2d = create_max_pool_2d(2)
     let pooled_tensor = pool_2d.apply(tf.tensor(img).expandDims(-1))
 
-    network[1].draw(svg, pooled_tensor.squeeze(-1).arraySync(), Layer.d_to_rgb)
-
     let convs = []
     let kernels = ["x_sobel", "y_sobel", "edge_detection", "sharpen", "box_blur", "x_sobel", "y_sobel", "edge_detection"]
     for(let i = 0; i < kernels.length; ++i) {
@@ -478,57 +494,138 @@ function draw_cnn_vis(img) {
         convs.push(convolved[0])
     }
 
-    network[2].draw(svg, convs)
+    network[1].draw(svg, convs)
 
     pool_2d = create_max_pool_2d(4)
     pooled_tensor = pool_2d.apply(tf.tensor(convs).expandDims(-1))
 
-    network[3].draw(svg, pooled_tensor.squeeze(-1).arraySync())
+    network[2].draw(svg, pooled_tensor.squeeze(-1).arraySync())
     
     
     
-    network[4].draw(svg, null)
+    network[3].draw(svg, null)
 
     // ------- Sliders -------
 
-    let random_scramble = Math.floor(Math.random() * 3 + 4)/10 // Generate random value in [0.4, 0.6] to mean "unscrambled"
-    console.log(random_scramble)
-    let conv_1_slider = d3_slider.sliderHorizontal().min(0).max(1-0.1).width(network[2].get_total_width()).ticks(0).step(0.1).displayValue(false).on("onchange", function(s) {
-        console.log(s)
+    let ticks = 40
+    let range_half_size = ticks / 10
+    let n = Math.floor(Math.random() * (2 + range_half_size * 2)) + (ticks / 2 - range_half_size - 1)
+    n += n % 2
+
+    let down = n / 2 + ((n/2) % 2)
+    let delta_p = 0.5 / down
+    let k = (1/2) * (n - down)
+
+
+    let moves_pre = [...Array(10)].map((_, i) => [0].concat(shuffle([...Array(n)].map((_, j) => {
+        let d = (i == 3) ? -delta_p : delta_p
+        if (j < down + k) {
+            return -d
+        } else {
+            return d
+        }
+    }))))
+
+    let n_post = ticks - n
+    let down_post = n_post / 2 + ((n_post/2) % 2)
+    let delta_p_post = 0.5 / down_post
+    let k_post = (1/2) * (n_post - down_post)
+
+    let moves_post = [...Array(10)].map((_, i) => shuffle([...Array(n_post)].map((_, j) => {
+        let d = (i == 3) ? delta_p_post : -delta_p_post
+
+        if (j < down_post + k_post) {
+            return -d
+        } else {
+            return d
+        }
+    })))
+
+    let moves = [...Array(10)].map((_, i) => moves_pre[i].concat(moves_post[i]))
+    
+
+    // Need to precompute these since ticks get skipped apparently...
+
+    let data = [...Array(ticks + 1)]
+    data[0] = [...Array(10)].map(() => 0.5)
+    for (let i = 1; i <= ticks; ++i) {
+        let copy = data[i - 1].slice(0)
+
+        for (let j = 0; j < 10; ++j) {
+            copy[j] += moves[j][i]
+        }
+
+        data[i] = copy
+    }
+    
+    let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x  + network[3].get_total_width() - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
         if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
             return
-        } else {
-            this.prev = s
-        }
-        
-        // Probability of randomly re-assigning a given pixel
-        let p = Math.round(Math.abs(s - random_scramble) * 10) / 10
-
-        let data = network[2].original_data
-        
-        let scramble = [...Array(data.length)].map(() => random_matrix(data[0][0].length, data[0].length))
-        
-        for (let i = 0; i < data.length; ++i) {
-            for (let j = 0; j < data[i].length; ++j) {
-                for (let k = 0; k < data[i][j].length; ++k) {
-                    if (Math.random() >= p) {
-                        scramble[i][j][k] = data[i][j][k]
-                    }
-                }
-            }
         }
 
-        network[2].redraw(svg, scramble)
+        // for (let i = 0; i < 10; ++i) {
+        //     if (this.prev == undefined || s > this.prev) {
+        //         data[i] += moves[i][s]
+        //     } else {
+        //         data[i] -= moves[i][s+1]
+        //     }
+        // }
+
+        let cur_data = data[s]
+        
+        network[3].redraw(svg, cur_data.map(d => [d * 255]))
+
+        this.prev = s
     });
 
     d3.select("#cnn-vis-main")
         .append("g")
-        .attr("transform", `translate(${network[2].x}, ${network[2].get_total_height() - Math.sin(network[2].rad) * network[2].w - filter_gap})`)
-        .attr("id", "slider-3")
-        .call(conv_1_slider);
+        .attr("transform", `translate(${network[1].x}, ${filter_gap})`)
+        .attr("id", "slider-1")
+        .call(output_slider);
 
-    conv_1_slider.silentValue(0.1)
-    conv_1_slider.value(0)
+    output_slider.silentValue(1)
+    output_slider.value(0)
+
+
+    // let random_scramble = Math.floor(Math.random() * 3 + 4)/10 // Generate random value in [0.4, 0.6] to mean "unscrambled"
+    // console.log(random_scramble)
+    // let conv_1_slider = d3_slider.sliderHorizontal().min(0).max(1-0.1).width(network[2].get_total_width()).ticks(0).step(0.1).displayValue(false).on("onchange", function(s) {
+    //     console.log(s)
+    //     if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
+    //         return
+    //     } else {
+    //         this.prev = s
+    //     }
+        
+    //     // Probability of randomly re-assigning a given pixel
+    //     let p = Math.round(Math.abs(s - random_scramble) * 10) / 10
+
+    //     let data = network[2].original_data
+        
+    //     let scramble = [...Array(data.length)].map(() => random_matrix(data[0][0].length, data[0].length))
+        
+    //     for (let i = 0; i < data.length; ++i) {
+    //         for (let j = 0; j < data[i].length; ++j) {
+    //             for (let k = 0; k < data[i][j].length; ++k) {
+    //                 if (Math.random() >= p) {
+    //                     scramble[i][j][k] = data[i][j][k]
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     network[2].redraw(svg, scramble)
+    // });
+
+    // d3.select("#cnn-vis-main")
+    //     .append("g")
+    //     .attr("transform", `translate(${network[2].x}, ${network[2].get_total_height() - Math.sin(network[2].rad) * network[2].w - filter_gap})`)
+    //     .attr("id", "slider-3")
+    //     .call(conv_1_slider);
+
+    // conv_1_slider.silentValue(0.1)
+    // conv_1_slider.value(0)
 
     // d3.select("#cnn-vis-main")
     //     .append("g")
