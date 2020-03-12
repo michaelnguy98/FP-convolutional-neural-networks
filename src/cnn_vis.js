@@ -4,6 +4,7 @@ import * as d3_slider from "d3-simple-slider"
 import * as d3_drag from "d3-drag"
 import {create_max_pool_2d, create_average_pool_2d, createConv} from "./convIntro/tensor"
 import * as tf from "@tensorflow/tfjs";
+import "babel-polyfill"
 
 function load_img_channels(url, callback) {
     const canvas = document.getElementById('input-image');
@@ -470,6 +471,11 @@ function shuffle(arr) {
 //     return (result + mean) * sd
 // }
 
+async function load_model() {
+    const model = await tf.loadLayersModel("https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/tfjs_model/model.json")
+    console.log(model)
+}
+
 function draw_cnn_vis(img) {
     let svg = d3.select("#cnn-vis")
 
@@ -663,6 +669,8 @@ function draw_cnn_vis(img) {
 
     output_slider.silentValue(1)
     output_slider.value(0)
+
+    load_model()
 
     // let random_scramble = Math.floor(Math.random() * 3 + 4)/10 // Generate random value in [0.4, 0.6] to mean "unscrambled"
     // console.log(random_scramble)
