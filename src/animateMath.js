@@ -88,16 +88,16 @@ const moveAnimationDuration = 1500;
 const textAnimationDuration = 1500;
 
 /** Width of cells, height of cells, font size of cells */
-const cellWidth = config.kernelCellWidth;
-const cellHeight = config.kernelCellHeight;
-const fontSize = config.fontSize * 1.5;
+let cellWidth = config.kernelCellWidth;
+let cellHeight = config.kernelCellHeight;
+let fontSize = config.fontSize * 1.5;
     
-const buttonWidth = config.cellWidth * 5;
-const buttonHeight = config.cellHeight * 2;
-const buttonGap = cellHeight;
+let buttonWidth = config.cellWidth * 5;
+let buttonHeight = config.cellHeight * 2;
+let buttonGap = cellHeight;
 
-const leftMargin = cellWidth;
-const topMargin = cellHeight;
+let leftMargin = cellWidth;
+let topMargin = cellHeight;
 
 // Find the maximums of the frame data:
 //   Largest total number of cells
@@ -157,8 +157,8 @@ for (const frame of frames) {
 }
 
 // Width and height of the svg
-const svgWidth = leftMargin * 2 + maxNumCols * cellWidth;
-const svgHeight = topMargin * 2 + maxNumRows * cellHeight + buttonGap + buttonHeight;
+let svgWidth = leftMargin * 2 + maxNumCols * cellWidth;
+let svgHeight = topMargin * 2 + maxNumRows * cellHeight + buttonGap + buttonHeight;
 
 // The cell data that was rendered in the previous frame
 let prevCells = [];
@@ -462,4 +462,67 @@ function prevFrame() {
 function nextFrame() {
     ++curFrame;
     drawFrame();
+}
+
+export function resizeAnimateMath() {
+    cellWidth = config.kernelCellWidth;
+    cellHeight = config.kernelCellHeight;
+    fontSize = config.fontSize * 1.5;
+    
+    buttonWidth = config.cellWidth * 5;
+    buttonHeight = config.cellHeight * 2;
+    buttonGap = cellHeight;
+
+    leftMargin = cellWidth;
+    topMargin = cellHeight;
+
+    svgWidth = leftMargin * 2 + maxNumCols * cellWidth;
+    svgHeight = topMargin * 2 + maxNumRows * cellHeight + buttonGap + buttonHeight;
+
+    const root = d3.select("#animateMathSection")
+        .select("#animateMathSvg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
+
+    // Group for separators(behind the cells)
+    root.select("#separators")
+        .selectAll(".separator")
+        .attr("font-size", fontSize);
+    
+    // Cell Wrappers
+    const wrappers = root.selectAll(".cellWrapper")
+        .attr("transform", `translate(${-svgWidth}, ${-svgHeight})`);
+    // Cell Color and Outline
+    wrappers.selectAll(".cellColor")
+        .attr("width", cellWidth)
+        .attr("height", cellHeight)
+        .attr("stroke-width", config.borderWidth);
+    // Cell Text
+    wrappers.selectAll(".cellText")
+        .attr("x", cellWidth / 2)
+        .attr("y", cellHeight / 2)
+        .attr("font-size", fontSize);
+
+    // Button Wrappers
+    const prevButtonWrapper = root.select("#prevButtonWrapper")
+        .attr("transform", `translate(${(svgWidth / 2) - buttonWidth}, ${topMargin + maxNumRows * cellHeight + buttonGap})`);
+    prevButtonWrapper.select("#prevButtonColor")
+        .attr("width", buttonWidth)
+        .attr("height", buttonHeight);
+    prevButtonWrapper.select("#prevButtonText")
+        .attr("x", buttonWidth / 2)
+        .attr("y", buttonHeight / 2)
+        .attr("font-size", config.fontSize);
+        
+    const nextButtonWrapper = root.select("#nextButtonWrapper")
+        .attr("transform", `translate(${svgWidth / 2}, ${topMargin + maxNumRows * cellHeight + buttonGap})`);
+    nextButtonWrapper.select("#nextButtonColor")
+        .attr("width", buttonWidth)
+        .attr("height", buttonHeight);
+    nextButtonWrapper.select("#nextButtonText")
+        .attr("x", buttonWidth / 2)
+        .attr("y", buttonHeight / 2)
+        .attr("font-size", config.fontSize);
+    
+    drawFrame(false);
 }

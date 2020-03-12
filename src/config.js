@@ -1,26 +1,28 @@
 import * as d3 from "d3";
 
-export const svgWidth = window.innerWidth * 0.95;
+export let svgWidth = window.innerWidth * 0.95;
 
 // Width and height of the input and output images, in pixels. The cell
 // width and height are automatically calculated to fit this size.
-export const img_width = svgWidth * 2 / 5;
-export const img_height = img_width;
+export let img_width = svgWidth * 2 / 5;
+export let img_height = img_width;
 
 // Should the input matrix be padded
 export const PADDED = true;
 
 // Cell border
-export const borderWidth = 1;
+export let borderWidth = 1;
 export const borderColor = "gray";
-export const highlightOutlineWidth = 2;
+
+// Highlight
+export let highlightOutlineWidth = 2;
 export const highlightColorIn = "purple";
 export const highlightColorOut = "red";
 
+// Button colors
 export const nextColor = d3.rgb(61, 195, 122);
 export const prevColor = d3.rgb(255, 178, 206);
 export const disableColor = "gray";
-
 export const convolveColor = nextColor;
 export const stopColor = prevColor;
 
@@ -49,18 +51,18 @@ export const outputHeight = PADDED ?
     inputHeight - 2 * inputHeightLoss;
 
 // Width/Height of an individual cell
-export const cellWidth = img_width / (inputWidth + 2);
-export const cellHeight = img_height / (inputHeight + 2);
+export let cellWidth = img_width / (inputWidth + 2);
+export let cellHeight = img_height / (inputHeight + 2);
 
-export const fontSize = cellHeight * 0.9;
+export let fontSize = cellHeight * 0.9;
 
 // Padding between images
-export const spaceBetween = img_width / 2;
+export let spaceBetween = img_width / 2;
 
-export const kernelCellWidth = spaceBetween / 2 / kernelWidth;
-export const kernelCellHeight = spaceBetween / 2 / kernelHeight;
+export let kernelCellWidth = spaceBetween / 2 / kernelWidth;
+export let kernelCellHeight = spaceBetween / 2 / kernelHeight;
 
-export const kernelFontSize = kernelCellHeight * 0.6;
+export let kernelFontSize = kernelCellHeight * 0.6;
 
 export const timePerLine = 10;
 
@@ -122,3 +124,26 @@ export const kernelPrettyNames =  {
    "sharpen": "Sharpen",
    "box_blur": "Blur"
 };
+
+export function recalculateConfig() {
+    svgWidth = window.innerWidth * 0.95;
+
+    img_width = svgWidth * 2 / 5;
+    img_height = img_width;
+
+    borderWidth = 1;
+
+    highlightOutlineWidth = 2;
+
+    cellWidth = img_width / (inputWidth + 2);
+    cellHeight = img_height / (inputHeight + 2);
+
+    fontSize = cellHeight * 0.9;
+
+    spaceBetween = img_width / 2;
+
+    kernelCellWidth = spaceBetween / 2 / kernelWidth;
+    kernelCellHeight = spaceBetween / 2 / kernelHeight;
+
+    kernelFontSize = kernelCellHeight * 0.6;
+}
