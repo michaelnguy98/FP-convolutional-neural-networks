@@ -183,8 +183,10 @@ export function initAnnotations() {
         .attr("id", "annotation-text");
 }
 
+let orig_text = ""
 // TOOD: move to other file
 export function updateAnnotation(text) {
+    orig_text = text
     d3.select("#annotation-text").text(text).call(wrap, text_area_w);
 }
 
@@ -304,6 +306,7 @@ export function resizeIntroConv() {
         .attr("font-size", config.fontSize)
         .attr("x", text_area_w / 2)
         .attr("y", "1em")
+        .text(orig_text)
         .call(wrap, text_area_w);
     
     const convAllButton = root.select("#convAllButtonWrapper")
