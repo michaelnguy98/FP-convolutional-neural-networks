@@ -2,8 +2,9 @@ import * as d3 from "d3";
 import * as config from "./config";
 import * as d3_slider from "d3-simple-slider"
 import * as d3_drag from "d3-drag"
-import {create_max_pool_2d, createConv} from "./convIntro/tensor"
+import {create_max_pool_2d, create_average_pool_2d, createConv} from "./convIntro/tensor"
 import * as tf from "@tensorflow/tfjs";
+import "babel-polyfill"
 
 function load_img_channels(url, callback) {
     const canvas = document.getElementById('input-image');
@@ -42,15 +43,15 @@ export function init_cnn_vis() {
     let height = config.img_height + config.borderWidth
     
     d3.select("#userTrainSection")
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .attr("id", "cnn-vis-main")
-    .append("g")
-    .attr("width", width)
-    .attr("height", height)
-    .attr("transform", `translate(${0}, ${height/2})`)
-    .attr("id", "cnn-vis")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("id", "cnn-vis-main")
+        .append("g")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("transform", `translate(${0}, ${height/2})`)
+        .attr("id", "cnn-vis")
 
     load_img_channels("https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/dog.png", img => 
     draw_cnn_vis(img))
@@ -180,21 +181,23 @@ class Layer {
                 let kernel_col = col_out * this.kernel_size
                 let kernel_row = this.size - this.kernel_size - row_out * this.kernel_size
 
+                let out_val = this.next_layer.data[selected_filter_idx][this.next_layer.data[selected_filter_idx].length - 1 - row_out][col_out]
+
                 let o_x = 0
                 let o_y = 0
-                let m = -Infinity
+                let min_delta = Infinity
                 for (let i = 0; i < this.kernel_size; ++i) {
                     for (let j = 0; j < this.kernel_size; ++j) {
-                        let val = this.data[Math.min(selected_filter_idx, this.data.length - 1)][kernel_row+i][kernel_col+j]
-
-                        if (val > m) {
-                            m = val
+                        let val = this.data[selected_filter_idx % this.data.length][kernel_row+i][kernel_col+j]
+                        
+                        if (Math.abs(val - out_val) < min_delta) {
+                            min_delta = Math.abs(val - out_val)
                             o_x = j
                             o_y = i
                         }
                     }
                 }
-                
+
                 cell_in_index = (kernel_row + o_y) * this.size + kernel_col + o_x
             }
 
@@ -370,6 +373,7 @@ class Layer {
         for(let filter_idx = 0; filter_idx < this.filters; ++filter_idx) {
             // Remove previously drawn layer
             svg.selectAll(".layer-" + this.layer_index + "-" + filter_idx).remove();
+            svg.selectAll("#outline-" + this.layer_index + "-" + filter_idx).remove();
 
             // Draw outline
             this.draw_3d_rect_vertical(svg.append("polygon"), this.x + this.filter_gap * filter_idx, this.y, this.w, this.h, this.rad, 0, 0, null, 0, "purple", 4)
@@ -437,21 +441,66 @@ function make_centered_layer(x, w, h, size, filters, filter_gap, kernel_size, no
     return new Layer(x, h/2 * (1 + Math.SQRT1_2), w, h, size, filters, filter_gap, kernel_size, no_overlap, rad)
 }
 
+function softmax(nums) {
+    let exp = nums.map(n => Math.exp(n))
+    let sum = exp.reduce((prev, cur) => prev + cur)
+    return exp.map(e => e / sum)
+}
+
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; --i) {
+        let swap_idx = Math.floor(Math.random() * (i+1))
+        let tmp = arr[swap_idx]
+        arr[swap_idx] = arr[i]
+        arr[i] = tmp
+    }
+
+    return arr
+}
+
+// // https://stackoverflow.com/questions/25582882/javascript-math-random-normal-distribution-gaussian-bell-curve
+// // Standard Normal variate using Box-Muller transform.
+// function random_normal(mean, sd) {
+//     var u = 0, v = 0;
+//     while(u == 0) u = Math.random();
+//     while(v == 0) v = Math.random();
+//     let result = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+//     return (result + mean) * sd
+// }
+
+async function load_model(img) {
+    const model = await tf.loadLayersModel("https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/tfjs_model/model.json")
+    
+    let img_tensor = tf.div(tf.tensor(img), 255.0).transpose([1, 2, 0]).expandDims(0)
+    let pred = model.predict(img_tensor).arraySync()[0]
+
+    let classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
+    let max_idx = 0
+    for (let i = 0; i < 10; ++i) {
+        if (pred[i] > pred[max_idx])
+            max_idx = i
+    }
+    console.log(classes[max_idx])
+}
 
 function draw_cnn_vis(img) {
     let svg = d3.select("#cnn-vis")
 
     let network = []
+    
+    let goal_width = config.svgWidth
 
-    let size = 256
-    let filter_gap = (size - 64) / 8
-    let x_start = filter_gap
+    var size = (goal_width + 30 * 8 - 18) / (15/4 + 7/4/Math.sqrt(2) + Math.sqrt(3)/16 + 9/8)
+    var filter_gap = (size - 64) / 8
+    var x_start = filter_gap
 
     network.push(make_centered_layer(x_start, size, size, 32, 3, filter_gap, 2, true))
-    network.push(make_centered_layer(network[0].x + network[0].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 3, filter_gap, 3))
-    network.push(make_centered_layer(network[1].x + network[1].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 8, filter_gap, 4, true))
-    network.push(make_centered_layer(network[2].x + network[2].get_total_width() + filter_gap * 4, size / 4, size / 4, 4, 8, filter_gap, 4, true))
-    network.push(make_centered_layer(network[3].x + network[3].get_total_width() + filter_gap * 4, size / 8, size / 8, 1, 10, size / 8 + 2, 1, true, Math.PI / 6))
+    network.push(make_centered_layer(network[0].x + network[0].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 8, filter_gap, 4, true))
+    network.push(make_centered_layer(network[1].x + network[1].get_total_width() + filter_gap * 4, size / 4, size / 4, 4, 8, filter_gap, 4, true))
+    network.push(make_centered_layer(network[2].x + network[2].get_total_width() + filter_gap * 4, size / 8, size / 8, 1, 10, size / 8 + 2, 1, true, Math.PI / 6))
+
+    // let w_test = 30 * filter_gap + 7/4/Math.sqrt(2) * size + Math.sqrt(3)/16*size + 9 * (size / 8 + 2)
 
     // Make svg/g container large enough to fit network
     let w = network[network.length - 1].x + network[network.length - 1].get_total_width() + filter_gap
@@ -467,8 +516,6 @@ function draw_cnn_vis(img) {
     let pool_2d = create_max_pool_2d(2)
     let pooled_tensor = pool_2d.apply(tf.tensor(img).expandDims(-1))
 
-    network[1].draw(svg, pooled_tensor.squeeze(-1).arraySync(), Layer.d_to_rgb)
-
     let convs = []
     let kernels = ["x_sobel", "y_sobel", "edge_detection", "sharpen", "box_blur", "x_sobel", "y_sobel", "edge_detection"]
     for(let i = 0; i < kernels.length; ++i) {
@@ -478,57 +525,199 @@ function draw_cnn_vis(img) {
         convs.push(convolved[0])
     }
 
-    network[2].draw(svg, convs)
+    network[1].draw(svg, convs)
 
-    pool_2d = create_max_pool_2d(4)
+    pool_2d = create_average_pool_2d(4)
     pooled_tensor = pool_2d.apply(tf.tensor(convs).expandDims(-1))
 
-    network[3].draw(svg, pooled_tensor.squeeze(-1).arraySync())
+    network[2].draw(svg, pooled_tensor.squeeze(-1).arraySync())
     
-    
-    
-    network[4].draw(svg, null)
+    network[3].draw(svg, null)
 
     // ------- Sliders -------
+    let class_names = Object.keys(config.imageUrls).sort()
 
-    let random_scramble = Math.floor(Math.random() * 3 + 4)/10 // Generate random value in [0.4, 0.6] to mean "unscrambled"
-    console.log(random_scramble)
-    let conv_1_slider = d3_slider.sliderHorizontal().min(0).max(1-0.1).width(network[2].get_total_width()).ticks(0).step(0.1).displayValue(false).on("onchange", function(s) {
-        console.log(s)
+
+    let correct_index = class_names.indexOf("Dog")
+
+    let initial_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.1, 1)
+
+    // Randomly select another index to have high probability, [0.9, 1), just to make sure
+    // there is at least one high prediction
+    let index = Math.floor(Math.random() * 10)
+    while (index == correct_index)
+        index = Math.floor(Math.random() * 10)
+    initial_data[index] = Math.random() * 0.1 + 0.9
+
+    initial_data[correct_index] = Math.random() * 0.25 + 0.25 // Make this one extra low, [0.25, 0.5)
+
+    let ticks = 64 * 5
+    let range_half_size = ticks / 10
+    let n = Math.floor(Math.random() * (2 + range_half_size * 2)) + (ticks / 2 - range_half_size - 1)
+    n += n % 2
+
+    let down = n / 2 + ((n/2) % 2)
+    let k = (1/2) * (n - down)
+
+    let deltas = initial_data.map(d => d / down)
+    deltas[correct_index] = deltas[correct_index] - 1/down
+    
+    let moves_pre = [...Array(10)].map((_, i) => [0].concat(shuffle([...Array(n)].map((_, j) => {
+        let d = deltas[i]
+        if (j < down + k) {
+            return -d
+        } else {
+            return d
+        }
+    }))))
+
+    let end_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.1, 1)
+
+    // Randomly select another index to have high probability, [0.9, 1), just to make sure
+    // there is at least one high prediction
+    index = Math.floor(Math.random() * 10)
+    while (index == correct_index)
+        index = Math.floor(Math.random() * 10)
+    end_data[index] = Math.random() * 0.1 + 0.9
+
+    end_data[correct_index] = Math.random() * 0.25 + 0.25 // Make this one extra low, [0.25, 0.5)
+    let n_post = ticks - n
+    let down_post = n_post / 2 + ((n_post/2) % 2)
+    let k_post = (1/2) * (n_post - down_post)
+
+    let deltas_post = end_data.map(d => d / down_post)
+    deltas_post[correct_index] = deltas_post[correct_index] - 1/down_post
+
+    let moves_post = [...Array(10)].map((_, i) => shuffle([...Array(n_post)].map((_, j) => {
+        let d = deltas_post[i]
+        if (j < down_post + k_post) {
+            return d
+        } else {
+            return -d
+        }
+    })))
+
+    let moves = [...Array(10)].map((_, i) => moves_pre[i].concat(moves_post[i]))
+    
+
+    // Need to precompute these since ticks get skipped apparently...
+    let layer_3_data = [...Array(ticks + 1)]
+    layer_3_data[0] = initial_data
+    for (let i = 1; i <= ticks; ++i) {
+        let copy = layer_3_data[i - 1].slice(0)
+
+        for (let j = 0; j < 10; ++j) {
+            copy[j] += moves[j][i]
+        }
+
+        layer_3_data[i] = copy
+    }
+
+    for (let i = 0; i < 3; ++i) {
+        d3.select("#cnn-vis")
+            .append("text")
+            .text(" 0% - ")
+            .attr("x", network[3].x)
+            .attr("y", network[3].get_total_height() + (i+1) * filter_gap)
+            .attr("font-family", "sans-serif")
+            .attr("font-size", config.fontSize)
+            .attr("id", "pred_" + i)
+    }
+
+    let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x  + network[3].get_total_width() - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
         if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
             return
-        } else {
-            this.prev = s
         }
-        
-        // Probability of randomly re-assigning a given pixel
-        let p = Math.round(Math.abs(s - random_scramble) * 10) / 10
 
-        let data = network[2].original_data
+        let scale = Math.min(n, ticks - n)
+
+        // Probability of randomly re-assigning a given pixel
+        let p = Math.abs(s - n) / scale
+
+        // Scramble layer 1
+        let layer_1_data = network[1].original_data
+        let layer_1_scramble = [...Array(layer_1_data.length)].map(() => random_matrix(layer_1_data[0][0].length, layer_1_data[0].length))
         
-        let scramble = [...Array(data.length)].map(() => random_matrix(data[0][0].length, data[0].length))
-        
-        for (let i = 0; i < data.length; ++i) {
-            for (let j = 0; j < data[i].length; ++j) {
-                for (let k = 0; k < data[i][j].length; ++k) {
+        for (let i = 0; i < layer_1_data.length; ++i) {
+            for (let j = 0; j < layer_1_data[i].length; ++j) {
+                for (let k = 0; k < layer_1_data[i][j].length; ++k) {
                     if (Math.random() >= p) {
-                        scramble[i][j][k] = data[i][j][k]
+                        layer_1_scramble[i][j][k] = layer_1_data[i][j][k]
                     }
                 }
             }
         }
 
-        network[2].redraw(svg, scramble)
+        network[1].redraw(svg, layer_1_scramble)
+
+        // Still have the right pooling layer stored...
+        let pooled_scramble = pool_2d.apply(tf.tensor(layer_1_scramble).expandDims(-1))
+        network[2].redraw(svg, pooled_scramble.squeeze(-1).arraySync())
+
+        let data_index = layer_3_data[s].map((d, i) => [i, d])
+
+        let sorted = data_index.sort((a, b) => b[1] - a[1])
+        
+        for (let i = 0; i < 3; ++i) {
+            let percent = Math.round(sorted[i][1] * 100)
+            let percent_str = `${(percent < 10 ? " " : "")}${percent}% - ${class_names[sorted[i][0]]}`
+            d3.select("#pred_" + i).text(percent_str)
+        }
+
+        network[3].redraw(svg, layer_3_data[s].map(d => [d * 255]))
+
+        this.prev = s
     });
 
     d3.select("#cnn-vis-main")
         .append("g")
-        .attr("transform", `translate(${network[2].x}, ${network[2].get_total_height() - Math.sin(network[2].rad) * network[2].w - filter_gap})`)
-        .attr("id", "slider-3")
-        .call(conv_1_slider);
+        .attr("transform", `translate(${network[1].x}, ${filter_gap})`)
+        .attr("id", "slider-1")
+        .call(output_slider);
 
-    conv_1_slider.silentValue(0.1)
-    conv_1_slider.value(0)
+    output_slider.silentValue(1)
+    output_slider.value(0)
+
+    load_model(img)
+
+    // let random_scramble = Math.floor(Math.random() * 3 + 4)/10 // Generate random value in [0.4, 0.6] to mean "unscrambled"
+    // console.log(random_scramble)
+    // let conv_1_slider = d3_slider.sliderHorizontal().min(0).max(1-0.1).width(network[2].get_total_width()).ticks(0).step(0.1).displayValue(false).on("onchange", function(s) {
+    //     console.log(s)
+    //     if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
+    //         return
+    //     } else {
+    //         this.prev = s
+    //     }
+        
+    //     // Probability of randomly re-assigning a given pixel
+    //     let p = Math.round(Math.abs(s - random_scramble) * 10) / 10
+
+    //     let data = network[2].original_data
+        
+    //     let scramble = [...Array(data.length)].map(() => random_matrix(data[0][0].length, data[0].length))
+        
+    //     for (let i = 0; i < data.length; ++i) {
+    //         for (let j = 0; j < data[i].length; ++j) {
+    //             for (let k = 0; k < data[i][j].length; ++k) {
+    //                 if (Math.random() >= p) {
+    //                     scramble[i][j][k] = data[i][j][k]
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     network[2].redraw(svg, scramble)
+    // });
+
+    // d3.select("#cnn-vis-main")
+    //     .append("g")
+    //     .attr("transform", `translate(${network[2].x}, ${network[2].get_total_height() - Math.sin(network[2].rad) * network[2].w - filter_gap})`)
+    //     .attr("id", "slider-3")
+    //     .call(conv_1_slider);
+
+    // conv_1_slider.silentValue(0.1)
+    // conv_1_slider.value(0)
 
     // d3.select("#cnn-vis-main")
     //     .append("g")
