@@ -441,13 +441,10 @@ function make_centered_layer(x, w, h, size, filters, filter_gap, kernel_size, no
     return new Layer(x, h/2 * (1 + Math.SQRT1_2), w, h, size, filters, filter_gap, kernel_size, no_overlap, rad)
 }
 
-function soft(nums) {
-    let exp = nums.map(n => Math.exp(n * 16))
+function softmax(nums) {
+    let exp = nums.map(n => Math.exp(n))
     let sum = exp.reduce((prev, cur) => prev + cur)
     return exp.map(e => e / sum)
-
-    let max = Math.max.apply(null, nums)
-    return nums.map(n => n / max)
 }
 
 function shuffle(arr) {
@@ -471,9 +468,20 @@ function shuffle(arr) {
 //     return (result + mean) * sd
 // }
 
-async function load_model() {
+async function load_model(img) {
     const model = await tf.loadLayersModel("https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/tfjs_model/model.json")
-    console.log(model)
+    
+    let img_tensor = tf.div(tf.tensor(img), 255.0).transpose([1, 2, 0]).expandDims(0)
+    let pred = model.predict(img_tensor).arraySync()[0]
+
+    let classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
+    let max_idx = 0
+    for (let i = 0; i < 10; ++i) {
+        if (pred[i] > pred[max_idx])
+            max_idx = i
+    }
+    console.log(classes[max_idx])
 }
 
 function draw_cnn_vis(img) {
@@ -670,7 +678,7 @@ function draw_cnn_vis(img) {
     output_slider.silentValue(1)
     output_slider.value(0)
 
-    load_model()
+    load_model(img)
 
     // let random_scramble = Math.floor(Math.random() * 3 + 4)/10 // Generate random value in [0.4, 0.6] to mean "unscrambled"
     // console.log(random_scramble)
