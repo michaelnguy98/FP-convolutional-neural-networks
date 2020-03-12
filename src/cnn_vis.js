@@ -42,15 +42,15 @@ export function init_cnn_vis() {
     let height = config.img_height + config.borderWidth
     
     d3.select("#userTrainSection")
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .attr("id", "cnn-vis-main")
-    .append("g")
-    .attr("width", width)
-    .attr("height", height)
-    .attr("transform", `translate(${0}, ${height/2})`)
-    .attr("id", "cnn-vis")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("id", "cnn-vis-main")
+        .append("g")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("transform", `translate(${0}, ${height/2})`)
+        .attr("id", "cnn-vis")
 
     load_img_channels("https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/dog.png", img => 
     draw_cnn_vis(img))
@@ -474,15 +474,19 @@ function draw_cnn_vis(img) {
     let svg = d3.select("#cnn-vis")
 
     let network = []
+    
+    let goal_width = config.svgWidth
 
-    let size = 256
-    let filter_gap = (size - 64) / 8
-    let x_start = filter_gap
+    var size = (goal_width + 30 * 8 - 18) / (15/4 + 7/4/Math.sqrt(2) + Math.sqrt(3)/16 + 9/8)
+    var filter_gap = (size - 64) / 8
+    var x_start = filter_gap
 
     network.push(make_centered_layer(x_start, size, size, 32, 3, filter_gap, 2, true))
     network.push(make_centered_layer(network[0].x + network[0].get_total_width() + filter_gap * 4, size / 2, size / 2, 16, 8, filter_gap, 4, true))
     network.push(make_centered_layer(network[1].x + network[1].get_total_width() + filter_gap * 4, size / 4, size / 4, 4, 8, filter_gap, 4, true))
     network.push(make_centered_layer(network[2].x + network[2].get_total_width() + filter_gap * 4, size / 8, size / 8, 1, 10, size / 8 + 2, 1, true, Math.PI / 6))
+
+    // let w_test = 30 * filter_gap + 7/4/Math.sqrt(2) * size + Math.sqrt(3)/16*size + 9 * (size / 8 + 2)
 
     // Make svg/g container large enough to fit network
     let w = network[network.length - 1].x + network[network.length - 1].get_total_width() + filter_gap
@@ -517,7 +521,10 @@ function draw_cnn_vis(img) {
     network[3].draw(svg, null)
 
     // ------- Sliders -------
-    let correct_index = 3
+    let class_names = Object.keys(config.imageUrls).sort()
+
+
+    let correct_index = class_names.indexOf("Dog")
 
     let initial_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.1, 1)
 
@@ -530,7 +537,7 @@ function draw_cnn_vis(img) {
 
     initial_data[correct_index] = Math.random() * 0.25 + 0.25 // Make this one extra low, [0.25, 0.5)
 
-    let ticks = 40
+    let ticks = 64 * 5
     let range_half_size = ticks / 10
     let n = Math.floor(Math.random() * (2 + range_half_size * 2)) + (ticks / 2 - range_half_size - 1)
     n += n % 2
@@ -591,7 +598,18 @@ function draw_cnn_vis(img) {
 
         layer_3_data[i] = copy
     }
-    
+
+    for (let i = 0; i < 3; ++i) {
+        d3.select("#cnn-vis")
+            .append("text")
+            .text(" 0% - ")
+            .attr("x", network[3].x)
+            .attr("y", network[3].get_total_height() + (i+1) * filter_gap)
+            .attr("font-family", "sans-serif")
+            .attr("font-size", config.fontSize)
+            .attr("id", "pred_" + i)
+    }
+
     let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x  + network[3].get_total_width() - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
         if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
             return
@@ -622,6 +640,15 @@ function draw_cnn_vis(img) {
         let pooled_scramble = pool_2d.apply(tf.tensor(layer_1_scramble).expandDims(-1))
         network[2].redraw(svg, pooled_scramble.squeeze(-1).arraySync())
 
+        let data_index = layer_3_data[s].map((d, i) => [i, d])
+
+        let sorted = data_index.sort((a, b) => b[1] - a[1])
+        
+        for (let i = 0; i < 3; ++i) {
+            let percent = Math.round(sorted[i][1] * 100)
+            let percent_str = `${(percent < 10 ? " " : "")}${percent}% - ${class_names[sorted[i][0]]}`
+            d3.select("#pred_" + i).text(percent_str)
+        }
 
         network[3].redraw(svg, layer_3_data[s].map(d => [d * 255]))
 
@@ -636,7 +663,6 @@ function draw_cnn_vis(img) {
 
     output_slider.silentValue(1)
     output_slider.value(0)
-
 
     // let random_scramble = Math.floor(Math.random() * 3 + 4)/10 // Generate random value in [0.4, 0.6] to mean "unscrambled"
     // console.log(random_scramble)
