@@ -370,20 +370,30 @@ class Layer {
         let layer = this
         this.original_data = this.data = data
         for(let filter_idx = 0; filter_idx < this.filters; ++filter_idx) {
-            // Remove previously drawn layer
-            svg.selectAll(".layer-" + this.layer_index + "-" + filter_idx).remove();
-            svg.selectAll("#outline-" + this.layer_index + "-" + filter_idx).remove();
+            let outline_polygon = svg.selectAll("#outline-" + this.layer_index + "-" + filter_idx)
+            if (outline_polygon.empty()) {
+                outline_polygon = svg.append("polygon")
+            }
 
             // Draw outline
-            this.draw_3d_rect_vertical(svg.append("polygon"), this.x + this.filter_gap * filter_idx, this.y, this.w, this.h, this.rad, 0, 0, null, 0, "purple", 4)
+            this.draw_3d_rect_vertical(outline_polygon, this.x + this.filter_gap * filter_idx, this.y, this.w, this.h, this.rad, 0, 0, null, 0, "purple", 4)
                 .attr("id", "outline-" + this.layer_index + "-" + filter_idx)
             
             let d = data == null ? random_matrix(this.size, this.size) : data[filter_idx]
 
-            svg.selectAll(".layer-" + this.layer_index + "-" + filter_idx)
-                .data(flatten(d))
-                .enter()
-                .append("polygon")
+            let layer_select = svg.selectAll(".layer-" + this.layer_index + "-" + filter_idx)
+            if (layer_select.empty()) {
+                layer_select = svg.selectAll(".layer-" + this.layer_index + "-" + filter_idx)
+                    .data(flatten(d))
+                    .enter()
+                    .append("polygon")
+                    .classed("layer-" + layer.layer_index + "-" + filter_idx, true)
+            }
+            else {
+                layer_select.data(flatten(d))
+            }
+
+            layer_select
                 .attr("points", function(_, i) {
                     let col = i % layer.size
                     let row = layer.size - 1 - Math.floor(i / layer.size)
@@ -429,7 +439,6 @@ class Layer {
                         cur = cur.prev_layer
                     }
                 })
-                .classed("layer-" + layer.layer_index + "-" + filter_idx, true)
                 .exit();
         }
     }

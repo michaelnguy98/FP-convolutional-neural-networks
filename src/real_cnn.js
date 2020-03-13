@@ -18,6 +18,7 @@ let cifar_10_images_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-c
 
 async function load_model() {
     model = await tf.loadLayersModel(tf_model_url)
+    predict()
 }
 
 function get_cifar10_classname_from_idx(idx) {
@@ -59,8 +60,6 @@ function predict() {
 }
 
 export function init_real_cnn() {
-    load_model()
-
     let indices = [...Array(num_classes * imgs_per_class).keys()]
 
     let w = config.svgWidth
@@ -95,6 +94,15 @@ export function init_real_cnn() {
                 .attr("x", d => (d % imgs_per_class) * img_space - border_size / 2)
                 .attr("y", d => Math.floor(d / imgs_per_class) * img_space - border_size / 2)
             d3.select("#selected-img-big").attr("href", get_cifar10_img_url(d))
+            
+            predict()
+            // // Reset probabilities
+            // let pred_data = [...Array(num_classes)].map((_, i) => [0, i])
+            // d3.select("#real-cnn-vis").selectAll(".net-pred")
+            //     .data(pred_data)
+            //     .text(d => `${(d[0] < 10 ? " " : "")}${d[0]}% - ${classes[d[1]]}`)
+            //     .classed("net-pred", true)
+            //     .style("visibility", "visible")
         })
 
     let svg = d3.select("#real-cnn-vis")
@@ -138,26 +146,26 @@ export function init_real_cnn() {
         .style("stroke-width", border_size)
         .attr("id", "img-select-rect")
 
-    svg.append("rect").attr("id", "predict-button")
-                        .attr("x", w / 2 + img_space + config.spaceBetween / 4)
-                        .attr("y", img_block_height / 2 - config.spaceBetween / 16)
-                        .attr("width", config.spaceBetween / 4)
-                        .attr("height", config.spaceBetween / 8)
-                        .attr("transform", `translate(${offset}, ${img_block_height + 2 * offset})`)
-                        .attr("fill", config.nextColor)
-                        .style("cursor", "pointer")
-                        .on("click", predict)
-    svg.append("text")
-        .attr("id", "predict-button-text")
-        .attr("x", w / 2 + img_space + config.spaceBetween / 4 + config.spaceBetween / 8)
-        .attr("y", img_block_height / 2)
-        .attr("transform", `translate(${offset}, ${img_block_height + 2 * offset})`)
-        .attr("pointer-events", "none")
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "central")
-        .attr("font-family", "sans-serif")
-        .attr("font-size", config.fontSize)
-        .text("Predict");
+    // svg.append("rect").attr("id", "predict-button")
+    //                     .attr("x", w / 2 + img_space + config.spaceBetween / 4)
+    //                     .attr("y", img_block_height / 2 - config.spaceBetween / 16)
+    //                     .attr("width", config.spaceBetween / 4)
+    //                     .attr("height", config.spaceBetween / 8)
+    //                     .attr("transform", `translate(${offset}, ${img_block_height + 2 * offset})`)
+    //                     .attr("fill", config.nextColor)
+    //                     .style("cursor", "pointer")
+    //                     .on("click", predict)
+    // svg.append("text")
+    //     .attr("id", "predict-button-text")
+    //     .attr("x", w / 2 + img_space + config.spaceBetween / 4 + config.spaceBetween / 8)
+    //     .attr("y", img_block_height / 2)
+    //     .attr("transform", `translate(${offset}, ${img_block_height + 2 * offset})`)
+    //     .attr("pointer-events", "none")
+    //     .attr("text-anchor", "middle")
+    //     .attr("dominant-baseline", "central")
+    //     .attr("font-family", "sans-serif")
+    //     .attr("font-size", config.fontSize)
+    //     .text("Predict");
 
     let pred_data = [...Array(num_classes)].map((_, i) => [0, i])
     svg.selectAll(".net-pred")
@@ -173,4 +181,6 @@ export function init_real_cnn() {
         .attr("dominant-baseline", "hanging")
         .classed("net-pred", true)
         .style("visibility", "hidden")
+
+        load_model()
 }
