@@ -8,6 +8,9 @@
         --kernelThumbSize: 0px;
         --kernelThumbFont: 0px;
       }
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+      }
       .thumbnail {
         width: var(--thumbSize);
         border: 3px solid transparent;
@@ -18,10 +21,10 @@
         font-size: var(--kernelThumbSize);
       }
       .kernelThumbCell {
-          width: var(--kernelThumbSize);
-          height: var(--kernelThumbSize);
-          font-size: var(--kernelThumbFont);
-          text-align: center;
+        width: var(--kernelThumbSize);
+        height: var(--kernelThumbSize);
+        font-size: var(--kernelThumbFont);
+        text-align: center;
       }
       .selected {
         border: 3px solid red;
@@ -41,47 +44,111 @@
         background-color: white;
         margin-left: 1em;
       }
+      .textContentWrapper {
+        text-align: center;
+      }
+      .textContentTitle {
+        display: inline-block;
+        font-size: var(--textContentFontSize);
+        width: 60%;
+        font-weight: bold;
+        margin-bottom: 0em;
+      }
+      .textContent {
+        display: inline-block;
+        font-size: var(--textContentFontSize);
+        width: 60%;
+        margin-top: 0.5em;
+      }
+      .title {
+        display: inline-block;
+        font-size: var(--textContentFontSize);
+        width: 60%;
+      }
     </style>
   </head>
   <body>
-    <a href="./alex/rgbIndex.html">Alex's page<a>
+    <a class="textContent" href="./alex/rgbIndex.html">Alex's page<a>
 
     <canvas hidden id="input-image" width="32px" height="32px"></canvas>
 
-    <div>
-      <p>Title</p>
-      <p>Motivation</p>
-      <p>How are we representing an image? What is RGB</p>
+    <div class="textContentWrapper">
+      <p class="title">
+        Title
+      </p>
+      <p class="textContentTitle">
+        Motivation
+      </p>
+      <p class="textContent">
+        Motivation blah blah blah
+      </p>
+      <p class="textContentTitle">
+        How are we representing an image?
+      </p>
+      <p class="textContent">
+        What is RGB?
+      </p>
     </div>
 
     <div id="animateRGBSection" style="text-align: center;"></div>
 
-    <div>
-      <p>Now, what is a convolution? What is the math and why do we do it instead of other methods like FC?</p>
+    <div class="textContentWrapper">
+      <p class="textContentTitle">
+        Now, what is a convolution?
+      </p>
+      <p class="textContent">
+        What is the math and why do we do it instead of other methods like FC?
+      </p>
     </div>
 
     <div id="animateMathSection" style="text-align: center;"></div>
     
-    <div>
-      <p>How does an image look after we run some simple convs?</p>
+    <div class="textContentWrapper">
+      <p class="textContentTitle">
+        Title
+      </p>
+      <p class="textContent">
+        How does an image look after we run some simple convs?
+      </p>
     </div>
 
     <div id="convIntroSection" style="text-align: center;"></div>
 
-    <div>
-      <p>Using convolutions, we can construct a "network" of convolutions that feed into each other; i.e. convolving an image that's already been convolved once. Some of these convolutions give great analysis of the images as-is, why string multiple together?</p>
+    <div class="textContentWrapper">
+      <p class="textContentTitle">
+        Title
+      </p>
+      <p class="textContent">
+        Using convolutions, we can construct a "network" of convolutions that feed into each other; i.e. convolving an image that's already been convolved once.
+        Some of these convolutions give great analysis of the images as-is, why string multiple together?
+      </p>
     </div>
 
     <div id="multiConvSection"></div>
 
-    <div>
-      <p>We would like our computer to guess what it is seeing accurately as possible. Go ahead and adjust the slider below and try and help the model correctly predict this dog. By adjusting the slider, you are changing the values within the image convolutions.</p>
+    <div class="textContentWrapper">
+      <p class="textContentTitle">
+        Title
+      </p>
+      <p class="textContent">
+        We would like our computer to guess what it is seeing accurately as possible.
+        Go ahead and adjust the slider below and try and help the model correctly predict this dog.
+        By adjusting the slider, you are changing the values within the image convolutions.
+      </p>
     </div>
 
     <div id="userTrainSection"></div>
 
-    <div>
-      <p>Now we have a network that can correctly identify this dog! However, it would be nice to have our network adjust the slider automatically without our help. Luckily, there is a technique called "Back-propagation"(link) that works similarly to what you did when adjusting the slider! The computer will make some predictions and it will move the slider in the direction that seems to best predict the dog.</p>
+    <div class="textContentWrapper">
+      <p class="textContentTitle">
+        Title
+      </p>
+      <p class="textContent">
+        Now we have a network that can correctly identify this dog!
+        However, it would be nice to have our network adjust the slider automatically without our help.
+        Luckily, there is a technique called "Back-propagation"(link) that works similarly to what you did when adjusting the slider!
+        The computer will make some predictions and it will move the slider in the direction that seems to best predict the dog.
+      </p>
     </div>
 
     <div id="autoTrainSection"></div>
