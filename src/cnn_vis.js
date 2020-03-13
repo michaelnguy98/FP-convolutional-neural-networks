@@ -576,39 +576,15 @@ function draw_cnn_vis(img, class_name) {
     let moves = [...Array(10)].map((_, i) => moves_pre[i].concat(moves_post[i]))
     
 
-    // Need to precompute these since ticks get skipped apparently...
-    let layer_3_data = [...Array(ticks + 1)]
-    layer_3_data[0] = initial_data
-    for (let i = 1; i <= ticks; ++i) {
-        let copy = layer_3_data[i - 1].slice(0)
-
-        for (let j = 0; j < 10; ++j) {
-            copy[j] += moves[j][i]
-        }
-
-        layer_3_data[i] = copy
-    }
-
-    for (let i = 0; i < 3; ++i) {
-        d3.select("#cnn-vis")
-            .append("text")
-            .text(" 0% - ")
-            .attr("x", network[3].x)
-            .attr("y", network[3].get_total_height() + (i+1) * filter_gap)
-            .attr("font-family", "sans-serif")
-            .attr("font-size", config.fontSize)
-            .attr("id", "pred_" + i)
-    }
-
-    let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x  + network[3].get_total_width() - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
-        if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
-            return
-        }
-
+    // Need to precompute these since ticks get skipped apparently and we want the randomness
+    // to always be the same
+    let layer_data = [...Array(3)].map(() => [...Array(ticks + 1)])
+    layer_data[2][0] = initial_data
+    for (let t = 0; t <= ticks; ++t) {
         let scale = Math.min(n, ticks - n)
 
         // Probability of randomly re-assigning a given pixel
-        let p = Math.abs(s - n) / scale
+        let p = Math.abs(t - n) / scale
 
         // Scramble layer 1
         let layer_1_data = network[1].original_data
@@ -624,13 +600,44 @@ function draw_cnn_vis(img, class_name) {
             }
         }
 
-        network[1].redraw(svg, layer_1_scramble)
+        layer_data[0][t] = layer_1_scramble
 
-        // Still have the right pooling layer stored...
         let pooled_scramble = pool_2d.apply(tf.tensor(layer_1_scramble).expandDims(-1))
-        network[2].redraw(svg, pooled_scramble.squeeze(-1).arraySync())
+        layer_data[1][t] = pooled_scramble.squeeze(-1).arraySync()
 
-        let data_index = layer_3_data[s].map((d, i) => [i, d])
+
+        if (t > 0) { // First entry is initial data
+            let copy = layer_data[2][t - 1].slice(0)
+
+            for (let j = 0; j < 10; ++j) {
+                copy[j] += moves[j][t]
+            }
+    
+            layer_data[2][t] = copy
+        }
+    }
+
+    for (let i = 0; i < 3; ++i) {
+        d3.select("#cnn-vis")
+            .append("text")
+            .text(" 0% - ")
+            .attr("x", network[3].x)
+            .attr("y", network[3].get_total_height() + (i+1) * filter_gap)
+            .attr("font-weight", i == 0 ? "bold" : "normal")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", config.fontSize)
+            .attr("id", "pred_" + i)
+    }
+
+    let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x  + network[3].get_total_width() - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
+        if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
+            return
+        }
+
+        network[1].redraw(svg, layer_data[0][s])
+        network[2].redraw(svg, layer_data[1][s])
+
+        let data_index = layer_data[2][s].map((d, i) => [i, d])
 
         let sorted = data_index.sort((a, b) => b[1] - a[1])
         
@@ -638,9 +645,10 @@ function draw_cnn_vis(img, class_name) {
             let percent = Math.min(Math.round(sorted[i][1] * 100), 100)
             let percent_str = `${(percent < 10 ? " " : "")}${percent}% - ${classes[sorted[i][0]]}`
             d3.select("#pred_" + i).text(percent_str)
+                .attr("fill", i == 0 ? (sorted[i][0] == correct_index ? "green" : "red") : null)
         }
 
-        network[3].redraw(svg, layer_3_data[s].map(d => [d * 255]))
+        network[3].redraw(svg, layer_data[2][s].map(d => [d * 255]))
 
         this.prev = s
     });
