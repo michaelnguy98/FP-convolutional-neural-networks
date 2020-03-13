@@ -150,7 +150,7 @@ export function drawConvLayers() {
 
     const data = [];
 
-    for (let i = 0; i < numLayers; i++) {
+    for (let i = 0; i < 3; i++) {
         data.push(`Layer ${i + 1}`);
     }
     
@@ -160,7 +160,7 @@ export function drawConvLayers() {
         .enter()
         .append("g")
         .attr("transform", (_, i) => `translate(${imageWidth + startImageX + (groupWidth * i)}, ${imageSectionY + (0.3 * imageSectionHeight)})`)
-        .attr("opacity", 1.0)
+        .attr("opacity", 0.0)
         .classed("convLayerWrapper", true);
     
     //line              
@@ -346,6 +346,8 @@ const actions = {
  * Updates the states of the layers
  */
 export function updateState(action) {
+    const convLayerWrappers = d3.select("#multiConvSvg");
+
     switch (action) {
         case 'ADD':
             if (numLayers <= 2) {
@@ -359,6 +361,18 @@ export function updateState(action) {
                 d3.select("#addButtonWrapper")
                     .attr("visibility", "hidden");
             }
+
+            convLayerWrappers.selectAll(".convLayerWrapper")
+                .transition()
+                .style("opacity", (_,i) => {
+                    if (i < numLayers) {
+                        return 1.0;
+                    } else {
+                        return 0.0;
+                    };
+                })
+                .duration(500);
+
             break;
         case 'REMOVE':
             if (numLayers > 0) {
@@ -372,9 +386,19 @@ export function updateState(action) {
                 d3.select("#removeButtonWrapper")
                     .attr("visibility", "hidden");
             }
+            
+            convLayerWrappers.selectAll(".convLayerWrapper")
+                .transition()
+                .style("opacity", (_,i) => {
+                    if (i >= numLayers) {
+                        return 0.0;
+                    } else {
+                        return 1.0;
+                    };
+                })
+                .duration(500);
             break;
         default:
-
     }
 
     let txt;
