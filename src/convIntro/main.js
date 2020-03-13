@@ -129,11 +129,11 @@ function getKernelTable(kernel, name) {
 function animateConv() {
     let stop_anim = false
 
-    d3.select("#prevButtonWrapper").attr("visibility", "hidden");
-    d3.select("#nextButtonWrapper").attr("visibility", "hidden");
-    d3.select("#convAllButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#prevButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#nextButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#convAllButtonWrapper").attr("visibility", "hidden");
 
-    d3.select("#selectionWrapper").node().style.visibility = "hidden";
+    d3.select("#convIntroSection").select("#selectionWrapper").node().style.visibility = "hidden";
 
     let default_val = slide_idx == 0 ? 0 : 255;
     visibleImg = [...Array(config.outputWidth)].map(() => [...Array(config.outputHeight)].map(() => [default_val, default_val, default_val]));
@@ -142,10 +142,10 @@ function animateConv() {
     drawOutputData(true);
 
 
-    d3.select("#convButtonColor")
+    d3.select("#convIntroSection").select("#convButtonColor")
         .on("click", () => { stop_anim = true; })
         .attr("fill", config.stopColor);
-    d3.select("#convButtonText").text("Stop");
+    d3.select("#convIntroSection").select("#convButtonText").text("Stop");
 
     let pixel = 0;
     const interval = d3.interval(() => {
@@ -163,20 +163,20 @@ function animateConv() {
             drawOutputData(false);
             removeEffects()
 
-            d3.select("#convButtonColor").attr("fill", config.convolveColor).on("click", animateConv);
-            d3.select("#convButtonText").text("Convolve");
+            d3.select("#convIntroSection").select("#convButtonColor").attr("fill", config.convolveColor).on("click", animateConv);
+            d3.select("#convIntroSection").select("#convButtonText").text("Convolve");
             if (slide_idx > 0) {
-                d3.select("#prevButtonWrapper")
+                d3.select("#convIntroSection").select("#prevButtonWrapper")
                     .attr("visibility", "visible");
             }
             if (slide_idx < slides.length - 1) {
-                d3.select("#nextButtonWrapper")
+                d3.select("#convIntroSection").select("#nextButtonWrapper")
                     .attr("visibility", "visible");
             }
-            d3.select("#convAllButtonWrapper").attr("visibility", "visible");
+            d3.select("#convIntroSection").select("#convAllButtonWrapper").attr("visibility", "visible");
 
             if (slide_idx == slides.length - 1) {
-               d3.select("#selectionWrapper").node().style.visibility = "visible";
+               d3.select("#convIntroSection").select("#selectionWrapper").node().style.visibility = "visible";
             }
         } else {
             ++pixel;
@@ -299,10 +299,10 @@ function next_slide() {
 
 export function initButtons() {
     const convAllButton = d3.select("#rootDisplay")
-    .append("g")
-    .attr("id", "convAllButtonWrapper")
-    .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
-                                  ${config.cellHeight})`);
+        .append("g")
+        .attr("id", "convAllButtonWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
+                                      ${config.cellHeight})`);
 
     convAllButton.append("rect")
         .attr("id", "convAllButtonColor")
@@ -325,10 +325,10 @@ export function initButtons() {
         .text("Convolve All");
 
     const convButton = d3.select("#rootDisplay")
-    .append("g")
-    .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
-                                  ${config.cellHeight * 2 + config.spaceBetween / 8})`);
-
+        .append("g")
+        .attr("id", "convButtonWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
+                                      ${config.cellHeight * 2 + config.spaceBetween / 8})`);
     convButton.append("rect")
         .attr("id", "convButtonColor")
         .attr("x", 0)
@@ -358,6 +358,7 @@ export function initButtons() {
     const nextButton = d3.select("#rootDisplay")
         .append("g")
         .attr("id", "nextButtonWrapper")
+        .attr("visibility", "visible")
         .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
                                   ${config.cellHeight * 3 + config.spaceBetween / 4})`);
 
@@ -414,6 +415,7 @@ export function initConvIntroSection() {
         .style("padding", 0)
         .style("visibility", "hidden");
     selectionWrapper.append("div")
+        .attr("id", "firstSpacing")
         .style("width", config.cellWidth);
     const thumbs = selectionWrapper.append("div")
         .attr("id", "thumbs")
@@ -441,11 +443,13 @@ export function initConvIntroSection() {
         }
     }
     selectionWrapper.append("div")
+        .attr("id", "secondSpacing")
         .style("width", config.spaceBetween);
     selectionWrapper.append("div")
-        .style("width", config.img_width)
-        .attr("id", "kernels");
+        .attr("id", "kernels")
+        .style("width", config.img_width);
     selectionWrapper.append("div")
+        .attr("id", "thirdSpacing")
         .style("width", config.cellWidth);
 
     document.documentElement.style.setProperty('--thumbSize', `${config.cellWidth * 3 + 3 * 2 + 2 * 3}px`);
@@ -469,7 +473,6 @@ export function initConvIntroSection() {
     initAnnotations();
 
     update_slide();
-    initControls();
     initKernelPreviews();
     updateData();
 
