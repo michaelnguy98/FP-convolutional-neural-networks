@@ -1,12 +1,27 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Convolutional Neural Networks</title>
+    <title>Convolutional Neural Networks RGB</title>
     <style>
     </style>
   </head>
   <body>
     <a href="../index.html">Back<a></a>
+    <div style="max-width:900px;margin:auto;">
+        <article>
+            <header>
+                <h1>Color Channels of an RGB Image</h1>
+            </header>
+            <p>The majority of images are stored as a grid of pixels where each
+                pixel holds info on the amount of the colors red, blue, and green
+                to display. This means that and RGB image is actually 3 dimensional
+                with the layers made up of the different color values. This is important
+                in convolution because it means that instead of having just a single
+                kernel for an image there will actually be a kernel for each of those
+                color layers.
+            </p>
+        </article>
+    </div>
     <canvas hidden id="input" width="32px" height="32px"></canvas>
     <div id="rgbSection"></div>
 
