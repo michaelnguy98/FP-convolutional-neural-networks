@@ -1,31 +1,31 @@
 import * as d3 from "d3";
-import * as config from "./config";
 import * as d3_slider from "d3-simple-slider"
-import * as d3_drag from "d3-drag"
-import {create_max_pool_2d, create_average_pool_2d, createConv} from "./convIntro/tensor"
+import * as config from "./config";
 import * as tf from "@tensorflow/tfjs";
-import "babel-polyfill"
+import {create_max_pool_2d, create_average_pool_2d, createConv} from "./convIntro/tensor"
 
-function load_img_channels(url, callback) {
-    const canvas = document.getElementById('input-image');
-    const context = canvas.getContext('2d');
+let classes = ['Plane', 'Car', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck']
 
-    const base_image = new Image();
-    base_image.onload = () => {
-        canvas.width = base_image.width;
-        canvas.height = base_image.height;
+export function load_img_channels(url, callback) {
+    const canvas = document.createElement("canvas")
+    const context = canvas.getContext("2d");
+
+    const image = new Image();
+    image.onload = () => {
+        canvas.width = image.width;
+        canvas.height = image.height;
 
         let img = [...Array(3)].map(() => [...Array(canvas.height)].map(() => [...Array(canvas.width)].map(() => 0)));
-        context.drawImage(base_image, 0, 0);
+        context.drawImage(image, 0, 0);
 
-        const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const img_data = context.getImageData(0, 0, canvas.width, canvas.height);
 
-        for (let i = 0; i < imgData.data.length; i += 4) {
+        for (let i = 0; i < img_data.data.length; i += 4) {
             let x = (i / 4) % canvas.width;
             let y = Math.floor((i / 4) / canvas.width);
 
             for(let j = 0; j < 3; ++j) {
-                img[j][y][x] = imgData.data[i + j]
+                img[j][y][x] = img_data.data[i + j]
             }            
 
         }
@@ -33,28 +33,27 @@ function load_img_channels(url, callback) {
         callback(img)
     }
 
-    base_image.crossOrigin = "Anonymous";
-    base_image.src = url;
+    image.crossOrigin = "Anonymous";
+    image.src = url;
 }
 
+function update_cnn_vis(class_name) {
+    let url = `https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/Images/${class_name.toLowerCase()}.png`
+    load_img_channels(url, img => draw_cnn_vis(img, class_name))
+}
 
 export function init_cnn_vis() {
-    let width = 2 * config.img_width + config.spaceBetween + config.borderWidth
+    let width = config.svgWidth
     let height = config.img_height + config.borderWidth
     
     d3.select("#userTrainSection")
+        .style("position", "relative")
         .append("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("id", "cnn-vis-main")
-        .append("g")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("transform", `translate(${0}, ${height/2})`)
-        .attr("id", "cnn-vis")
 
-    load_img_channels("https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/dog.png", img => 
-    draw_cnn_vis(img))
+    update_cnn_vis("Dog")
 }
 
 function flatten(a) {
@@ -441,12 +440,6 @@ function make_centered_layer(x, w, h, size, filters, filter_gap, kernel_size, no
     return new Layer(x, h/2 * (1 + Math.SQRT1_2), w, h, size, filters, filter_gap, kernel_size, no_overlap, rad)
 }
 
-function softmax(nums) {
-    let exp = nums.map(n => Math.exp(n))
-    let sum = exp.reduce((prev, cur) => prev + cur)
-    return exp.map(e => e / sum)
-}
-
 function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; --i) {
         let swap_idx = Math.floor(Math.random() * (i+1))
@@ -458,34 +451,8 @@ function shuffle(arr) {
     return arr
 }
 
-// // https://stackoverflow.com/questions/25582882/javascript-math-random-normal-distribution-gaussian-bell-curve
-// // Standard Normal variate using Box-Muller transform.
-// function random_normal(mean, sd) {
-//     var u = 0, v = 0;
-//     while(u == 0) u = Math.random();
-//     while(v == 0) v = Math.random();
-//     let result = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
-//     return (result + mean) * sd
-// }
-
-async function load_model(img) {
-    const model = await tf.loadLayersModel("https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/tfjs_model/model.json")
-    
-    let img_tensor = tf.div(tf.tensor(img), 255.0).transpose([1, 2, 0]).expandDims(0)
-    let pred = model.predict(img_tensor).arraySync()[0]
-
-    let classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
-
-    let max_idx = 0
-    for (let i = 0; i < 10; ++i) {
-        if (pred[i] > pred[max_idx])
-            max_idx = i
-    }
-    console.log(classes[max_idx])
-}
-
-function draw_cnn_vis(img) {
-    let svg = d3.select("#cnn-vis")
+function draw_cnn_vis(img, class_name) {
+    d3.select("#cnn-vis-main").selectAll("*").remove()
 
     let network = []
     
@@ -500,14 +467,17 @@ function draw_cnn_vis(img) {
     network.push(make_centered_layer(network[1].x + network[1].get_total_width() + filter_gap * 4, size / 4, size / 4, 4, 8, filter_gap, 4, true))
     network.push(make_centered_layer(network[2].x + network[2].get_total_width() + filter_gap * 4, size / 8, size / 8, 1, 10, size / 8 + 2, 1, true, Math.PI / 6))
 
-    // let w_test = 30 * filter_gap + 7/4/Math.sqrt(2) * size + Math.sqrt(3)/16*size + 9 * (size / 8 + 2)
-
     // Make svg/g container large enough to fit network
     let w = network[network.length - 1].x + network[network.length - 1].get_total_width() + filter_gap
     let h = network[0].get_total_height() + 2 * filter_gap
 
     d3.select("#cnn-vis-main").attr("width", w).attr("height", h)
-    svg.attr("width", w).attr("height", h).attr("transform", `translate(${0}, ${h/2})`)
+
+    let svg = d3.select("#cnn-vis-main").append("g")
+        .attr("width", w)
+        .attr("height", h)
+        .attr("transform", `translate(${0}, ${h/2})`)
+        .attr("id", "cnn-vis")
 
     Layer.link_network(network)
 
@@ -535,10 +505,7 @@ function draw_cnn_vis(img) {
     network[3].draw(svg, null)
 
     // ------- Sliders -------
-    let class_names = Object.keys(config.imageUrls).sort()
-
-
-    let correct_index = class_names.indexOf("Dog")
+    let correct_index = classes.indexOf(class_name)
 
     let initial_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.1, 1)
 
@@ -659,8 +626,8 @@ function draw_cnn_vis(img) {
         let sorted = data_index.sort((a, b) => b[1] - a[1])
         
         for (let i = 0; i < 3; ++i) {
-            let percent = Math.round(sorted[i][1] * 100)
-            let percent_str = `${(percent < 10 ? " " : "")}${percent}% - ${class_names[sorted[i][0]]}`
+            let percent = Math.min(Math.round(sorted[i][1] * 100), 100)
+            let percent_str = `${(percent < 10 ? " " : "")}${percent}% - ${classes[sorted[i][0]]}`
             d3.select("#pred_" + i).text(percent_str)
         }
 
@@ -678,81 +645,26 @@ function draw_cnn_vis(img) {
     output_slider.silentValue(1)
     output_slider.value(0)
 
-    load_model(img)
+    // This is not part of the svg, so we have to remove it manually here
+    d3.select("#img-select").remove()
+    let select = d3.select("#userTrainSection").insert("select", "#cnn-vis-main")
+        .attr("id", "img-select")
+        .style("left", filter_gap)
+        .style("top", filter_gap)
+        .style("position", "absolute")
+        .style("float", "left")
+        .style("font-size", config.fontSize)
 
-    // let random_scramble = Math.floor(Math.random() * 3 + 4)/10 // Generate random value in [0.4, 0.6] to mean "unscrambled"
-    // console.log(random_scramble)
-    // let conv_1_slider = d3_slider.sliderHorizontal().min(0).max(1-0.1).width(network[2].get_total_width()).ticks(0).step(0.1).displayValue(false).on("onchange", function(s) {
-    //     console.log(s)
-    //     if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
-    //         return
-    //     } else {
-    //         this.prev = s
-    //     }
-        
-    //     // Probability of randomly re-assigning a given pixel
-    //     let p = Math.round(Math.abs(s - random_scramble) * 10) / 10
-
-    //     let data = network[2].original_data
-        
-    //     let scramble = [...Array(data.length)].map(() => random_matrix(data[0][0].length, data[0].length))
-        
-    //     for (let i = 0; i < data.length; ++i) {
-    //         for (let j = 0; j < data[i].length; ++j) {
-    //             for (let k = 0; k < data[i][j].length; ++k) {
-    //                 if (Math.random() >= p) {
-    //                     scramble[i][j][k] = data[i][j][k]
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     network[2].redraw(svg, scramble)
-    // });
-
-    // d3.select("#cnn-vis-main")
-    //     .append("g")
-    //     .attr("transform", `translate(${network[2].x}, ${network[2].get_total_height() - Math.sin(network[2].rad) * network[2].w - filter_gap})`)
-    //     .attr("id", "slider-3")
-    //     .call(conv_1_slider);
-
-    // conv_1_slider.silentValue(0.1)
-    // conv_1_slider.value(0)
-
-    // d3.select("#cnn-vis-main")
-    //     .append("g")
-    //     .attr("transform", "translate(575, 100)")
-    //     .attr("id", "slider-2")
-    //     .call(slider);
-
-    // slider = d3_slider.sliderHorizontal().min(0).max(1).width(200).ticks(0).step(0.05).displayValue(false).on("onchange", m => {
-    //     for(let i = 0; i < 16; ++i) {
-    //         draw_img_3d_rect(svg, null, 800 + (i+1) * 16, 16 + 16 * Math.SQRT1_2, 32, 2, "#8A2BE2", i + 15, (d, _) => d3.rgb(d * 255, d * 255, d * 255))
-    //     }
-    // });
-
-    // d3.select("#cnn-vis-main")
-    //     .append("g")
-    //     .attr("transform", "translate(850, 100)")
-    //     .attr("id", "slider-3")
-    //     .call(slider);
-
-    // slider = d3_slider.sliderHorizontal().min(0).max(0.9).width(100).ticks(0).step(0.1).displayValue(false).on("onchange", s => {
-    //     let idx = Math.round(s * 10) | 0;
-    //     let data = [...Array(1)].map(() => [...Array(10)].map(() => 0));
-    //     data[idx] = 1
-    //     // let exp_data = data[0].map(num => Math.exp(num * 32))
-    //     // let sum = exp_data.reduce((total, cur) => total + cur)
-    //     // exp_data = exp_data.map(num => num / sum)
-    //     // console.log(exp_data)
-    //     for(let i = 0; i < 10; ++i) {
-    //         draw_img_3d_rect(svg, [[data[i]]], 1150 + (i+1) * 16, 8 + 8 * Math.SQRT1_2, 16, 1, "#8A2BE2", i + 31, (d, _) => d3.rgb(d * 255, d * 255, d * 255), 0)
-    //     }
-    // });
-
-    // d3.select("#cnn-vis-main")
-    //     .append("g")
-    //     .attr("transform", "translate(1200, 100)")
-    //     .attr("id", "slider-4")
-    //     .call(slider);
+    select.selectAll("option")
+        .data(classes)
+        .enter()
+        .append("option")
+        .attr("value", d => d)
+        .text(d => d)
+    
+    select.property("value", class_name).on("change", () => {
+        let selected_class = d3.select("#img-select").property("value")
+        console.log(selected_class)
+        update_cnn_vis(selected_class)
+    })
 }

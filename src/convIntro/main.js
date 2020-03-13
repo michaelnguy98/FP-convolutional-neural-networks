@@ -306,6 +306,7 @@ export function initButtons() {
         .attr("y", 0)
         .attr("width", config.spaceBetween / 2)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", conv_all)
         .attr("fill", config.convolveColor);
     convAllButton.append("text")
@@ -330,6 +331,7 @@ export function initButtons() {
         .attr("y", 0)
         .attr("width", config.spaceBetween / 2)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", animateConv)
         .attr("fill", config.convolveColor);
     convButton.append("text")
@@ -361,6 +363,7 @@ export function initButtons() {
         .attr("id", "prevButtonColor")
         .attr("width", config.spaceBetween / 4)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", prev_slide)
         .attr("fill", config.prevColor);
     prevButton.append("text")
@@ -380,6 +383,7 @@ export function initButtons() {
         .attr("y", 0)
         .attr("width", config.spaceBetween / 4)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", next_slide)
         .attr("fill", config.nextColor);
     nextButton.append("text")
