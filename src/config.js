@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 
 export const minSvgWidth = 1080;
-export let svgWidth = window.innerWidth * 0.95;
+export let svgWidth = window.innerWidth * 0.9;
 
 // Width and height of the input and output images, in pixels. The cell
 // width and height are automatically calculated to fit this size.

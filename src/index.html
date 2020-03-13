@@ -24,7 +24,6 @@
         width: var(--kernelThumbSize);
         height: var(--kernelThumbSize);
         font-size: var(--kernelThumbFont);
-        text-align: center;
       }
       .selected {
         border: 3px solid red;
@@ -48,22 +47,25 @@
         text-align: center;
       }
       .textContentTitle {
+        text-align: left;
         display: inline-block;
-        font-size: var(--textContentFontSize);
+        font-size: var(--textContentTitleFontSize);
         width: 60%;
         font-weight: bold;
         margin-bottom: 0em;
       }
       .textContent {
+        text-align: left;
         display: inline-block;
         font-size: var(--textContentFontSize);
         width: 60%;
         margin-top: 0.5em;
       }
       .title {
+        text-align: left;
         display: inline-block;
-        font-size: var(--textContentFontSize);
-        width: 60%;
+        font-size: var(--titleFontSize);
+        width: 80%;
       }
     </style>
   </head>
@@ -74,7 +76,7 @@
 
     <div class="textContentWrapper">
       <p class="title">
-        Title
+        Convolutional Neural Networks
       </p>
       <p class="textContentTitle">
         Motivation
