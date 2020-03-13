@@ -19,6 +19,7 @@ export const highlightColorOut = "red";
 
 export const nextColor = d3.rgb(61, 195, 122);
 export const prevColor = d3.rgb(255, 178, 206);
+export const disableColor = "gray";
 
 export const convolveColor = nextColor;
 export const stopColor = prevColor;
@@ -64,7 +65,7 @@ export const kernelFontSize = kernelCellHeight * 0.6;
 export const timePerLine = 10;
 
 export const imageUrls = {
-    "Bird": "https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/bird.png",
+    "Bird": "https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/bird.png",
     "Car": "https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/car.png",
     "Cat": "https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/cat.png",
     "Deer": "https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/deer.png",

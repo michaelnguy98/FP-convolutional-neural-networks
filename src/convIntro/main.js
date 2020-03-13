@@ -129,11 +129,11 @@ function getKernelTable(kernel, name) {
 function animateConv() {
     let stop_anim = false
 
-    d3.select("#prevButtonWrapper").attr("visibility", "hidden");
-    d3.select("#nextButtonWrapper").attr("visibility", "hidden");
-    d3.select("#convAllButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#prevButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#nextButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#convAllButtonWrapper").attr("visibility", "hidden");
 
-    d3.select("#selectionWrapper").node().style.visibility = "hidden";
+    d3.select("#convIntroSection").select("#selectionWrapper").node().style.visibility = "hidden";
 
     let default_val = slide_idx == 0 ? 0 : 255;
     visibleImg = [...Array(config.outputWidth)].map(() => [...Array(config.outputHeight)].map(() => [default_val, default_val, default_val]));
@@ -142,10 +142,10 @@ function animateConv() {
     drawOutputData(true);
 
 
-    d3.select("#convButtonColor")
+    d3.select("#convIntroSection").select("#convButtonColor")
         .on("click", () => { stop_anim = true; })
         .attr("fill", config.stopColor);
-    d3.select("#convButtonText").text("Stop");
+    d3.select("#convIntroSection").select("#convButtonText").text("Stop");
 
     let pixel = 0;
     const interval = d3.interval(() => {
@@ -163,20 +163,20 @@ function animateConv() {
             drawOutputData(false);
             removeEffects()
 
-            d3.select("#convButtonColor").attr("fill", config.convolveColor).on("click", animateConv);
-            d3.select("#convButtonText").text("Convolve");
+            d3.select("#convIntroSection").select("#convButtonColor").attr("fill", config.convolveColor).on("click", animateConv);
+            d3.select("#convIntroSection").select("#convButtonText").text("Convolve");
             if (slide_idx > 0) {
-                d3.select("#prevButtonWrapper")
+                d3.select("#convIntroSection").select("#prevButtonWrapper")
                     .attr("visibility", "visible");
             }
             if (slide_idx < slides.length - 1) {
-                d3.select("#nextButtonWrapper")
+                d3.select("#convIntroSection").select("#nextButtonWrapper")
                     .attr("visibility", "visible");
             }
-            d3.select("#convAllButtonWrapper").attr("visibility", "visible");
+            d3.select("#convIntroSection").select("#convAllButtonWrapper").attr("visibility", "visible");
 
             if (slide_idx == slides.length - 1) {
-               d3.select("#selectionWrapper").node().style.visibility = "visible";
+               d3.select("#convIntroSection").select("#selectionWrapper").node().style.visibility = "visible";
             }
         } else {
             ++pixel;
@@ -254,15 +254,19 @@ function update_slide(kernel_description=null) {
     updateAnnotation(annotation)
 
     if (slide_idx == 0) {
-        d3.select("#prevButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#prevButtonWrapper")
             .attr("visibility", "hidden");
     } else if (slide_idx == slides.length - 1) {
-        d3.select("#nextButtonWrapper")
-           .attr("visibility", "hidden");
+        d3.select('#rootDisplay')
+            .select("#nextButtonWrapper")
+            .attr("visibility", "hidden");
     } else {
-        d3.select("#prevButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#prevButtonWrapper")
             .attr("visibility", "visible");
-        d3.select("#nextButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#nextButtonWrapper")
             .attr("visibility", "visible");
     }
         
@@ -403,6 +407,47 @@ export function initButtons() {
  * This function will run when the document has loaded.
  */
 export function initConvIntroSection() {
+    const selectionWrapper = d3.select("#convIntroSection")
+        .append("div")
+        .attr("id", "selectionWrapper")
+        .style("display", "flex")
+        .style("padding", 0)
+        .style("visibility", "hidden");
+    selectionWrapper.append("div")
+        .style("width", config.cellWidth);
+    const thumbs = selectionWrapper.append("div")
+        .attr("id", "thumbs")
+        .style("width", config.img_width);
+    const hiddenPadding = thumbs.append("div");
+    hiddenPadding.append("p")
+        .style("font-size", "var(--kernelThumbFont")
+        .style("margin-block-start", 0)
+        .style("margin-block-end", 0)
+        .style("visibility", "hidden")
+        .text("-");
+    hiddenPadding.append("p")
+        .style("font-size", "var(--kernelThumbFont")
+        .style("margin-block-start", 0)
+        .style("margin-block-end", 0)
+        .style("visibility", "hidden")
+        .text("-");
+    const imgUrls = Object.values(config.imageUrls);
+    for (let i = 0; i < imgUrls.length; ++i) {
+        const img = thumbs.append("img")
+            .classed("thumbnail", true)
+            .attr("src", imgUrls[i]);
+        if (i === 0) {
+            img.classed("selected", true);
+        }
+    }
+    selectionWrapper.append("div")
+        .style("width", config.spaceBetween);
+    selectionWrapper.append("div")
+        .style("width", config.img_width)
+        .attr("id", "kernels");
+    selectionWrapper.append("div")
+        .style("width", config.cellWidth);
+
     document.documentElement.style.setProperty('--thumbSize', `${config.cellWidth * 3 + 3 * 2 + 2 * 3}px`);
     document.documentElement.style.setProperty('--kernelThumbSize', `${config.cellWidth}px`);
     document.documentElement.style.setProperty('--kernelThumbFont', `${config.fontSize}px`);
@@ -427,6 +472,6 @@ export function initConvIntroSection() {
     initControls();
     initKernelPreviews();
     updateData();
-    
+
     initButtons();
 }
