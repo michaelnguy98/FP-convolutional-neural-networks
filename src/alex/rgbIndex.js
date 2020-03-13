@@ -15,37 +15,6 @@ function init() {
     buildrgb("https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/truck.png", x => drawRGB(x))
 }
 
-function buildrgb(src, func) {
-    const canvas = document.getElementById('input');
-    const context = canvas.getContext('2d');
-
-    const image = new Image();
-    
-    image.onload = () => {
-        canvas.width = image.width;
-        canvas.height = image.height;
-
-        let img = [...Array(3)].map(() => [...Array(canvas.height)].map(() => [...Array(canvas.width)].map(() => 0)));
-
-        context.drawImage(image, 0, 0);
-
-        const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-        for (let i = 0; i < imgData.data.length; i += 4) {
-            let x = (i / 4) % canvas.width;
-            let y = Math.floor((i / 4) / canvas.width);
-            for (let j = 0; j < 3; ++j) {
-                img[j][y][x] = imgData.data[i + j]
-            }
-        }
-
-        func(img)
-    }
-
-    image.crossOrigin = "Anonymous";
-    image.src = src;
-}
-
 function drawRGB(img) {
     let g = d3.select("#rgbG")
 
@@ -150,6 +119,37 @@ function drawRGB(img) {
     for (let i = 0; i < 3; ++i) {
         draw_box(g, img, i * 300, 300, s, n, i);
     }
+}
+
+function buildrgb(src, func) {
+    const canvas = document.getElementById('input');
+    const context = canvas.getContext('2d');
+
+    const image = new Image();
+    
+    image.onload = () => {
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        let img = [...Array(3)].map(() => [...Array(canvas.height)].map(() => [...Array(canvas.width)].map(() => 0)));
+
+        context.drawImage(image, 0, 0);
+
+        const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < imgData.data.length; i += 4) {
+            let x = (i / 4) % canvas.width;
+            let y = Math.floor((i / 4) / canvas.width);
+            for (let j = 0; j < 3; ++j) {
+                img[j][y][x] = imgData.data[i + j]
+            }
+        }
+
+        func(img)
+    }
+
+    image.crossOrigin = "Anonymous";
+    image.src = src;
 }
 
 function draw_box(g, img, x, y, s, n, index) {
