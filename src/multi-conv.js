@@ -1,4 +1,6 @@
 import * as d3 from "d3";
+import * as config from "./config";
+
 import image1 from "../cat_conv/cat_conv1.png";
 import image2 from "../cat_conv/cat_conv3.png";
 import image3 from "../cat_conv/cat_conv5.png";
@@ -20,6 +22,43 @@ let svgWidth = 900;
 let svgHeight = svgWidth / 3;
 
 /**
+ * Proportions for image
+ */
+let imageSectionWidth = svgWidth;
+let imageSectionHeight = svgHeight / 2;
+
+let imageSectionX = 0;
+let imageSectionY = 0;
+
+let groupWidth = 0.2 * imageSectionWidth;
+let groupHeight = 0.5 * imageSectionHeight;
+
+// Image
+let imageWidth = 0.4 * groupWidth;
+let imageHeight = imageWidth;
+
+let imageX = 0.6 * groupWidth;
+let imageY = 0.2 * groupHeight;
+
+// Image Text
+let imageTextX = imageX + imageWidth / 2;
+let imageTextY = imageY - 0.1 * imageHeight;
+
+// Arrow
+let arrowLength = 0.35 * groupWidth;
+let arrowX1 = 0.1 * groupWidth;
+let arrowX2 = arrowX1 + arrowLength;
+let arrowY = 0.7 * groupHeight;
+
+// Arrow Text
+let arrowTextX = arrowX1 + arrowLength / 2;
+let arrowTextY = arrowY - 0.1 * groupHeight;
+
+// Start Image
+let startImageX = 0.15 * imageSectionWidth;
+let startImageY = imageSectionY + (0.3 * imageSectionHeight) + imageY;
+
+/**
  * Proportions of the description text
  */
 let textSectionWidth = svgWidth;
@@ -28,7 +67,7 @@ let textSectionHeight = svgHeight / 4;
 let textSectionX = 0;
 let textSectionY = svgHeight / 2;
 
-let textX = textSectionWidth / 2;
+let textX = textSectionX + textSectionWidth / 2;
 let textY = textSectionY + textSectionHeight / 2;
 
 /**
@@ -37,25 +76,22 @@ let textY = textSectionY + textSectionHeight / 2;
 let buttonSectionWidth = svgWidth;
 let buttonSectionHeight = textSectionHeight;
 
+let buttonSectionX = 0;
+let buttonSectionY = (3 / 4) * svgHeight;
 
+let buttonWidth = buttonSectionWidth / 8;
+let buttonHeight = buttonSectionHeight / 2;
 
-const fontSize = 30;
+let nextButtonX = buttonSectionX + buttonSectionWidth / 2;
+let nextButtonY = buttonSectionY + buttonSectionHeight / 3;
 
-const rectWidth = 50;
-const rectHeight = 140;
+let prevButtonX = nextButtonX - buttonWidth;
+let prevButtonY = nextButtonY;
 
-const startingConvX = 50;
-const startingConvY = 50;
-
-const spacing = 220;
-const lineLength = 75;
-const imageWidth = 100;
-const imageHeight = 100;
-
-const widthPadding = startingConvX;
-
-const borderWidth = widthPadding + 805 + widthPadding;
-const borderHeight = 900;
+/**
+ * Font Size
+ */
+let fontSize = svgWidth / 30;
 
 export function initMultiConvSection() {
     initSVG();
@@ -72,19 +108,22 @@ export function initSVG() {
     d3.select("#multiConvSection")
         .append("svg")
         .attr("id", "multiConvSvg")
-        .attr("width", borderWidth)
-        .attr("height", borderHeight);
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
     
+    let arrowSize = 0.04 * groupHeight;
+    let arrowPoints = [[0, 0], [0, arrowSize * 2], [arrowSize * 3, arrowSize]];
+
     // arrow
     d3.select("#multiConvSvg").append("svg:defs").append("svg:marker")
         .attr("id", "triangle")
         .attr("refX", 0)
-        .attr("refY", 3)
-        .attr("markerWidth", 10)
-        .attr("markerHeight", 10)
+        .attr("refY", arrowSize)
+        .attr("markerWidth", groupHeight / 5)
+        .attr("markerHeight", groupHeight / 5)
         .attr("orient", "auto")
         .append("path")
-        .attr("d", "M0,0 L0,6 L9,3 z")
+        .attr("d", d3.line()(arrowPoints))
         .style("stroke", "black");
 }
 
@@ -105,38 +144,36 @@ export function drawConvLayers() {
         .data(data)
         .enter()
         .append("g")
-        .attr("transform", (_, i) => `translate(${180 + (225 * i)}, ${startingConvY - 20})`)
+        .attr("transform", (_, i) => `translate(${imageWidth + startImageX + (groupWidth * i)}, ${imageSectionY + (0.3 * imageSectionHeight)})`)
         .attr("opacity", 0.5)
         .classed("convLayerWrapper", true);
-
-    const startLayers = startingConvX + 120
     
     //line              
     convLayerWrappers.append("line")
-        .attr("x1", 0)
-        .attr("y1", 70)
-        .attr("x2", lineLength)
-        .attr("y2", 70)          
-        .attr("stroke-width", 1)
+        .attr("x1", arrowX1)
+        .attr("y1", arrowY)
+        .attr("x2", arrowX2)
+        .attr("y2", arrowY)          
+        .attr("stroke-width", fontSize / 30)
         .attr("stroke", "black")
         .attr("marker-end", "url(#triangle)")
         .classed("layerArrow", true);
 
     //text
     convLayerWrappers.append("text")
-        .attr("x", 40)
-        .attr("y", 55)
+        .attr("x", arrowTextX)
+        .attr("y", arrowTextY)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
-        .attr("font-size", fontSize / 2)
+        .attr("font-size", fontSize / 3)
         .attr("pointer-events", "none")
         .text("Convolution");
 
     //image
     convLayerWrappers.append("svg:image")
-        .attr("x", 105)
-        .attr("y", 20)
+        .attr("x", imageX)
+        .attr("y", imageY)
         .attr("width", imageWidth)
         .attr("height", imageHeight)
         .attr("stroke", "black")
@@ -153,15 +190,14 @@ export function drawConvLayers() {
             return img;
         });
 
-    const imageY = startingConvY;
-
+    //text
     convLayerWrappers.append("text")
-        .attr("x", 155)
-        .attr("y", 10)
+        .attr("x", imageTextX)
+        .attr("y", imageTextY)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
-        .attr("font-size", fontSize / 2)
+        .attr("font-size", fontSize / 3)
         .attr("pointer-events", "none")
         .text((_, i) => `Layer ${i+1}`);
 
@@ -179,38 +215,30 @@ export function drawConvLayers() {
 
 export function drawButtons() {
     // Make Button
-    const buttonWidth = 3 * rectWidth;
-    const buttonHeight = 50;
-
-    const buttonX = startingConvX + (spacing * (3 - 1) + rectWidth) / 2 - buttonWidth / 2;
-    const buttonY = startingConvY + rectHeight + 75;
     
     // This is the Add Layer Button
     const addButtonWrapper = d3.select("#multiConvSvg")
         .append("g")
         .attr("id", "addButtonWrapper");
     addButtonWrapper.append("rect")
-        .attr("x", buttonX)
-        .attr("y", buttonY)
+        .attr("x", nextButtonX)
+        .attr("y", nextButtonY)
         .attr("width", buttonWidth)
         .attr("height", buttonHeight)
-        .attr("fill", "white")
-        .attr("stroke", "black")
+        .attr("fill", config.nextColor)
         .style("cursor", "pointer")
         .on("click", () => updateState(actions.ADD))
         .classed("buttonRect", true);
     addButtonWrapper.append("text")
-        .attr("x", buttonX + buttonWidth / 2)
-        .attr("y", buttonY + buttonHeight / 2)
+        .attr("x", nextButtonX + buttonWidth / 2)
+        .attr("y", nextButtonY + buttonHeight / 2)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
         .attr("font-size", fontSize / 2)
         .attr("pointer-events", "none")
-        .text("Add Layer")
+        .text("Next")
         .classed("buttonText", true);
-
-    let buttonSpacing = 200;
 
     // This is the Remove Layer Button
     const removeButtonWrapper = d3.select("#multiConvSvg")
@@ -218,24 +246,23 @@ export function drawButtons() {
         .attr("id", "removeButtonWrapper")
         .attr("visibility", "hidden");
     removeButtonWrapper.append("rect")
-        .attr("x", buttonX + buttonSpacing)
-        .attr("y", buttonY)
+        .attr("x", prevButtonX)
+        .attr("y", prevButtonY)
         .attr("width", buttonWidth)
         .attr("height", buttonHeight)
-        .attr("fill", "white")
-        .attr("stroke", "black")
+        .attr("fill", config.prevColor)
         .style("cursor", "pointer")
         .on("click", () => updateState(actions.REMOVE))
         .classed("buttonRect", true);
     removeButtonWrapper.append("text")
-        .attr("x", buttonX + buttonSpacing + buttonWidth / 2)
-        .attr("y", buttonY + buttonHeight / 2)
+        .attr("x", prevButtonX + buttonWidth / 2)
+        .attr("y", prevButtonY + buttonHeight / 2)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
         .attr("font-size", fontSize / 2)
         .attr("pointer-events", "none")
-        .text("Remove Layer")
+        .text("Prev")
         .classed("buttonText", true);
 }
 
@@ -244,26 +271,23 @@ export function drawButtons() {
  */
 export function drawInputImage() {
     
-    let imageX = startingConvX;
-    let imageY = startingConvY;
-    
     const imageWrapper = d3.select("#multiConvSvg")
         .append("g")
         .attr("id", "imageWrapper");
     imageWrapper.append("svg:image")
-        .attr("x", imageX)
-        .attr("y", imageY)
+        .attr("x", startImageX)
+        .attr("y", startImageY)
         .attr("width", imageWidth)
         .attr("height", imageHeight)
         .attr('xlink:href', puppy)
         .attr("stroke", "black");
     imageWrapper.append("text")
-        .attr("x", imageX + imageWidth / 2)
-        .attr("y", imageY - imageHeight / 10)
+        .attr("x", startImageX + imageWidth / 2)
+        .attr("y", startImageY - 0.1 * imageHeight)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
-        .attr("font-size", fontSize / 2)
+        .attr("font-size", fontSize / 3)
         .attr("pointer-events", "none")
         .text("Input");
     
@@ -273,18 +297,13 @@ export function drawInputImage() {
  * Draws the text
  */
 export function drawText() {
-    const imageWidth = 100;
-    const imageHeight = 100; 
-    
-    let imageX = startingConvX + 75;
-    let imageY = startingConvY + 100;
     
     const imageWrapper = d3.select("#multiConvSvg")
         .append("g")
         .attr("id", "textWrapper");
     imageWrapper.append("text")
-        .attr("x", imageX + spacing + imageWidth / 2)
-        .attr("y", imageY + imageHeight / 2)
+        .attr("x", textX)
+        .attr("y", textY)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
@@ -294,8 +313,8 @@ export function drawText() {
         .text("Here is the puppy image.")
         .classed("descriptionText", true);
     imageWrapper.append("text")
-        .attr("x", imageX + spacing + imageWidth / 2)
-        .attr("y", imageY + imageHeight / 2)
+        .attr("x", textX)
+        .attr("y", textY)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
