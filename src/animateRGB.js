@@ -218,7 +218,6 @@ export function resizeAnimateRGB() {
 
     imgWidth = 5 * config.kernelCellWidth;
     imgHeight = 5 * config.kernelCellHeight;
-    console.log(imgWidth);
 
     buttonWidth = config.cellWidth * 5;
     buttonHeight = config.cellHeight * 2;

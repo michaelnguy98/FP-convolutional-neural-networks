@@ -481,7 +481,6 @@ async function load_model(img) {
         if (pred[i] > pred[max_idx])
             max_idx = i
     }
-    console.log(classes[max_idx])
 }
 
 function draw_cnn_vis(img) {
