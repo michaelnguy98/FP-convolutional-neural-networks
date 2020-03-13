@@ -44,37 +44,47 @@
     </style>
   </head>
   <body>
-    <a href="./alex/index.html">Alex's page<a>
-    
-    <div id="convIntroSection">
-      <div id="selectionWrapper" style="display: flex; padding: 0em; visibility: hidden;">
-        <div id="thumbs" style="padding-right: 1em;">
-          <div>
-              <p style="font-size: var(--kernelThumbFont); margin-block-start: 0px; margin-block-end: 0px; visibility: hidden;">.</p>
-              <p style="font-size: var(--kernelThumbFont); margin-block-start: 0px; margin-block-end: 0px; visibility: hidden;">.</p>
-          </div>
-          <img class="thumbnail selected" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/bird.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/car.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/cat.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/deer.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/dog.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/frog.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/horse.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/plane.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/ship.png"/>
-          <img class="thumbnail" src="https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/master/Images/truck.png"/>
-        </div>
-        <div id="kernels">
-        </div>
-      </div>
-      <canvas hidden id="input-image" width="32px" height="32px"></canvas>
+    <a href="./alex/rgbIndex.html">Alex's page<a>
+
+    <canvas hidden id="input-image" width="32px" height="32px"></canvas>
+
+    <div>
+      <p>Title</p>
+      <p>Motivation</p>
+      <p>How are we representing an image? What is RGB</p>
     </div>
 
-    <div id="convIntroSection"></div>
+    <div id="animateRGBSection" style="text-align: center;"></div>
+
+    <div>
+      <p>Now, what is a convolution? What is the math and why do we do it instead of other methods like FC?</p>
+    </div>
+
+    <div id="animateMathSection" style="text-align: center;"></div>
+    
+    <div>
+      <p>How does an image look after we run some simple convs?</p>
+    </div>
+
+    <div id="convIntroSection" style="text-align: center;"></div>
+
+    <div>
+      <p>Using convolutions, we can construct a "network" of convolutions that feed into each other; i.e. convolving an image that's already been convolved once. Some of these convolutions give great analysis of the images as-is, why string multiple together?</p>
+    </div>
 
     <div id="multiConvSection"></div>
 
+    <div>
+      <p>We would like our computer to guess what it is seeing accurately as possible. Go ahead and adjust the slider below and try and help the model correctly predict this dog. By adjusting the slider, you are changing the values within the image convolutions.</p>
+    </div>
+
     <div id="userTrainSection"></div>
+
+    <div>
+      <p>Now we have a network that can correctly identify this dog! However, it would be nice to have our network adjust the slider automatically without our help. Luckily, there is a technique called "Back-propagation"(link) that works similarly to what you did when adjusting the slider! The computer will make some predictions and it will move the slider in the direction that seems to best predict the dog.</p>
+    </div>
+
+    <div id="autoTrainSection"></div>
 
     <script src="./index.js"></script>
   </body>
