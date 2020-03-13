@@ -179,8 +179,9 @@ class Layer {
 
                 let kernel_col = col_out * this.kernel_size
                 let kernel_row = this.size - this.kernel_size - row_out * this.kernel_size
-
-                let out_val = this.next_layer.data[selected_filter_idx][this.next_layer.data[selected_filter_idx].length - 1 - row_out][col_out]
+                
+                let next_data = this.next_layer.data[selected_filter_idx % this.next_layer.data.length]
+                let out_val = next_data[next_data.length - 1 - row_out][col_out]
 
                 let o_x = 0
                 let o_y = 0
@@ -460,6 +461,8 @@ function shuffle(arr) {
     return arr
 }
 
+let selected_img_idx = classes.indexOf("Dog")
+
 function draw_cnn_vis(img, class_name) {
     d3.select("#cnn-vis-main").selectAll("*").remove()
 
@@ -478,14 +481,19 @@ function draw_cnn_vis(img, class_name) {
 
     // Make svg/g container large enough to fit network
     let w = network[network.length - 1].x + network[network.length - 1].get_total_width() + filter_gap
+    
+    let img_space = w / (16 + 1)
+    let img_size = w/(16 + 1 + 2)
+    let border_size = img_space - img_size
+
     let h = network[0].get_total_height() + 2 * filter_gap
 
-    d3.select("#cnn-vis-main").attr("width", w).attr("height", h)
+    d3.select("#cnn-vis-main").attr("width", w).attr("height", h + img_space)
 
     let svg = d3.select("#cnn-vis-main").append("g")
         .attr("width", w)
         .attr("height", h)
-        .attr("transform", `translate(${0}, ${h/2})`)
+        .attr("transform", `translate(${0}, ${img_space + h/2})`)
         .attr("id", "cnn-vis")
 
     Layer.link_network(network)
@@ -608,7 +616,6 @@ function draw_cnn_vis(img, class_name) {
 
         if (t > 0) { // First entry is initial data
             let copy = layer_data[2][t - 1].slice(0)
-
             for (let j = 0; j < 10; ++j) {
                 copy[j] += moves[j][t]
             }
@@ -629,7 +636,7 @@ function draw_cnn_vis(img, class_name) {
             .attr("id", "pred_" + i)
     }
 
-    let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x  + network[3].get_total_width() - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
+    let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
         if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
             return
         }
@@ -648,14 +655,14 @@ function draw_cnn_vis(img, class_name) {
                 .attr("fill", i == 0 ? (sorted[i][0] == correct_index ? "green" : "red") : null)
         }
 
-        network[3].redraw(svg, layer_data[2][s].map(d => [d * 255]))
+        network[3].redraw(svg, layer_data[2][s].map(d => [[d * 255]]))
 
         this.prev = s
     });
 
     d3.select("#cnn-vis-main")
         .append("g")
-        .attr("transform", `translate(${network[1].x}, ${filter_gap})`)
+        .attr("transform", `translate(${network[1].x}, ${img_space + (h/2 - network[1].get_total_height() / 2) / 2})`)
         .attr("id", "slider-1")
         .call(output_slider);
 
@@ -663,25 +670,62 @@ function draw_cnn_vis(img, class_name) {
     output_slider.value(0)
 
     // This is not part of the svg, so we have to remove it manually here
-    d3.select("#img-select").remove()
-    let select = d3.select("#userTrainSection").insert("select", "#cnn-vis-main")
-        .attr("id", "img-select")
-        .style("left", filter_gap)
-        .style("top", filter_gap)
-        .style("position", "absolute")
-        .style("float", "left")
-        .style("font-size", config.fontSize)
+    // d3.select("#img-select").remove()
+    // let select = d3.select("#userTrainSection").insert("select", "#cnn-vis-main")
+    //     .attr("id", "img-select")
+    //     .style("left", filter_gap)
+    //     .style("top", filter_gap)
+    //     .style("position", "absolute")
+    //     .style("float", "left")
+    //     .style("font-size", config.fontSize)
 
-    select.selectAll("option")
-        .data(classes)
-        .enter()
-        .append("option")
-        .attr("value", d => d)
-        .text(d => d)
+    // select.selectAll("option")
+    //     .data(classes)
+    //     .enter()
+    //     .append("option")
+    //     .attr("value", d => d)
+    //     .text(d => d)
     
-    select.property("value", class_name).on("change", () => {
-        let selected_class = d3.select("#img-select").property("value")
-        console.log(selected_class)
-        update_cnn_vis(selected_class)
-    })
+    // select.property("value", class_name).on("change", () => {
+    //     let selected_class = d3.select("#img-select").property("value")
+    //     console.log(selected_class)
+    //     update_cnn_vis(selected_class)
+    // })
+
+    console.log("cnn ", img_size)
+    let select_g = d3.select("#cnn-vis-main").append("g").attr("id", "cnn-vis-img-sel")
+    let indices = [...Array(10).keys()]
+    select_g.attr("width", img_space * 10)
+        .attr("height", img_space)
+        .selectAll("image")
+        .data(indices)
+        .enter()
+        .append("image")
+        .attr("x", d => d * img_space)
+        .attr("y", 0)
+        .attr("href", d => `https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/Images/${classes[d].toLowerCase()}.png`)
+        .attr("width", img_size)
+        .attr("height", img_size)
+        .attr("transform", `translate(${border_size}, ${border_size})`)
+        .attr("image-rendering", "pixelated")
+        .style("cursor", "pointer")
+        .on("click", d => {
+            selected_img_idx = d
+            update_cnn_vis(classes[selected_img_idx])
+        })
+
+    select_g.selectAll("rect")
+        .data([selected_img_idx])
+        .enter()
+        .append("rect")
+        .attr("x", d => d * img_space - border_size / 2)
+        .attr("y",  - border_size / 2)
+        .attr("width", img_space)
+        .attr("height", img_space)
+        .attr("transform", `translate(${border_size}, ${border_size})`)
+        .style("fill-opacity", "0")
+        .style("stroke", "red")
+        .style("stroke-width", border_size)
+        .attr("id", "cnn-img-select-rect")
+
 }

@@ -72,7 +72,7 @@ export function init_real_cnn() {
     let offset = img_space
     let img_size = w/(imgs_per_class+5)
     let border_size = img_space - img_size
-
+    
     let h = 2 * img_block_height + 3 * offset
 
     d3.select("#realCnnSection")
