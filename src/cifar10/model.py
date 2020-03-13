@@ -6,6 +6,19 @@ import tensorflowjs as tfjs
 
 (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
 
+classes = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+
+# For each class, save 64 random images as png
+for i in range(10):
+    class_i = np.squeeze(test_labels == i, axis=-1)
+    images = test_images[class_i]
+
+    images = tf.constant(images[np.random.choice(len(images), 64, False)])
+    for j in range(64):
+        png = tf.image.encode_png(images[j], compression=0)
+        name = "{}_{}.png".format(classes[i], j)
+        tf.io.write_file(name, png)
+
 # Normalize pixel values to be between 0 and 1
 train_images, test_images = train_images / 255.0, test_images / 255.0
 
