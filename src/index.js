@@ -1,5 +1,6 @@
 import {initConvIntroSection} from './convIntro/main';
-import {init_cnn_vis} from './cnn_vis';
+import {init_cnn_vis, resize_cnn_vis} from './cnn_vis';
+import {init_real_cnn, resize_real_cnn} from './real_cnn'
 import {initMultiConvSection, resizeMultiConv} from './multi-conv';
 import {initAnimateMathSection, resizeAnimateMath} from './animateMath';
 import {initAnimateRGBSection, resizeAnimateRGB} from './animateRGB';
@@ -12,6 +13,7 @@ function loadSections() {
   initMultiConvSection();
   initConvIntroSection();
   init_cnn_vis();
+  init_real_cnn();
 }
 
 function onResize() {
@@ -22,6 +24,9 @@ function onResize() {
   resizeIntroConv();
 
   resizeMultiConv()
+
+  resize_cnn_vis()
+  resize_real_cnn()
 }
 
 window.onload = loadSections;

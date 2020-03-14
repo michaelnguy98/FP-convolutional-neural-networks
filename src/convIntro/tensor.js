@@ -54,3 +54,7 @@ export function createConv(inShape, kernel, stride, dialation, padded) {
 export function create_max_pool_2d(size) {
     return tf.layers.maxPooling2d({poolSize : size})
 }
+
+export function create_average_pool_2d(size) {
+    return tf.layers.averagePooling2d({poolSize : size})
+}
