@@ -416,7 +416,7 @@ export function initConvIntroSection() {
         .style("visibility", "hidden");
     selectionWrapper.append("div")
         .attr("id", "firstSpacing")
-        .style("width", config.cellWidth);
+        .style("width", "9%");
     const thumbs = selectionWrapper.append("div")
         .attr("id", "thumbs")
         .style("width", config.img_width);
@@ -448,13 +448,6 @@ export function initConvIntroSection() {
     selectionWrapper.append("div")
         .attr("id", "kernels")
         .style("width", config.img_width);
-    selectionWrapper.append("div")
-        .attr("id", "thirdSpacing")
-        .style("width", config.cellWidth);
-
-    document.documentElement.style.setProperty('--thumbSize', `${config.cellWidth * 3 + 3 * 2 + 2 * 3}px`);
-    document.documentElement.style.setProperty('--kernelThumbSize', `${config.cellWidth}px`);
-    document.documentElement.style.setProperty('--kernelThumbFont', `${config.fontSize}px`);
 
     for(let thumbnail of document.getElementsByClassName("thumbnail")) {
         thumbnail.addEventListener("click", (a, b) => {

@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 
 export const minSvgWidth = 720;
-export let svgWidth = Math.max(window.innerWidth * 0.95, minSvgWidth);
+export let svgWidth = window.innerWidth * 0.8;
 
 // Width and height of the input and output images, in pixels. The cell
 // width and height are automatically calculated to fit this size.
@@ -127,7 +127,7 @@ export const kernelPrettyNames =  {
 };
 
 export function recalculateConfig() {
-    svgWidth = Math.max(window.innerWidth * 0.95, minSvgWidth);
+    svgWidth = Math.max(window.innerWidth * 0.8, minSvgWidth);
 
     img_width = svgWidth * 2 / 5;
     img_height = img_width;
@@ -147,4 +147,11 @@ export function recalculateConfig() {
     kernelCellHeight = spaceBetween / 2 / kernelHeight;
 
     kernelFontSize = kernelCellHeight * 0.6;
+
+    document.documentElement.style.setProperty('--thumbSize', `${cellWidth * 3 + 3 * 2 + 2 * 3}px`);
+    document.documentElement.style.setProperty('--kernelThumbSize', `${cellWidth}px`);
+    document.documentElement.style.setProperty('--kernelThumbFont', `${fontSize}px`);
+    document.documentElement.style.setProperty('--titleFontSize', `${kernelFontSize * 2.5}px`);
+    document.documentElement.style.setProperty('--textContentTitleFontSize', `${kernelFontSize * 1.5}px`);
+    document.documentElement.style.setProperty('--textContentFontSize', `${kernelFontSize}px`);
 }

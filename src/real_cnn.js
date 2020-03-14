@@ -15,8 +15,8 @@ let imgs_per_class = 32
 let selected_img_idx =Math.floor(Math.random() * (num_classes * imgs_per_class))
 let current_pred_data = [...Array(num_classes)].map((_, i) => [0, i])
 
-let tf_model_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/tfjs_model/model.json"
-let cifar_10_images_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/images/"
+let tf_model_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/src/cifar10/tfjs_model/model.json"
+let cifar_10_images_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/src/cifar10/images/"
 
 async function load_model() {
     model = await tf.loadLayersModel(tf_model_url)
@@ -92,19 +92,19 @@ function update_real_cnn() {
         .data(indices)
         .enter()
         .append("image")
-        .attr("x", d => (d % imgs_per_class) * img_space)
+        .attr("x", d => img_space / 2 + (d % imgs_per_class) * img_space)
         .attr("y", d => Math.floor(d / imgs_per_class) * img_space)
         .attr("href", d => get_cifar10_img_url(d))
         .attr("width", img_size)
         .attr("height", img_size)
-        .attr("transform", `translate(${offset}, ${offset})`)
+        .attr("transform", `translate(${0}, ${offset})`)
         .attr("image-rendering", "pixelated")
         .style("cursor", "pointer")
         .on("click", d => {
             d3.select("#img-select-rect")
                 .data([d])
                 .attr("x", d => (d % imgs_per_class) * img_space - border_size / 2)
-                .attr("y", d => Math.floor(d / imgs_per_class) * img_space - border_size / 2)
+                .attr("y", d => (Math.floor(d / imgs_per_class) + 1) * img_space - border_size / 2)
             selected_img_idx = d
             d3.select("#selected-img-big").attr("href", get_cifar10_img_url(selected_img_idx))
             
@@ -125,10 +125,10 @@ function update_real_cnn() {
         .enter()
         .append("rect")
         .attr("x", d => (d % imgs_per_class) * img_space - border_size / 2)
-        .attr("y", d => Math.floor(d / imgs_per_class) * img_space - border_size / 2)
+        .attr("y", d => (Math.floor(d / imgs_per_class) + 1) * img_space - border_size / 2)
         .attr("width", img_space)
         .attr("height", img_space)
-        .attr("transform", `translate(${offset}, ${offset})`)
+        .attr("transform", `translate(${img_space / 2}, ${0})`)
         .style("fill-opacity", "0")
         .style("stroke", "red")
         .style("stroke-width", border_size)

@@ -356,8 +356,8 @@ export function resizeIntroConv() {
 
     const selectionWrapper = d3.select("#convIntroSection")
         .select("#selectionWrapper");
-    selectionWrapper.select("#firstSpacing")
-        .style("width", config.cellWidth);
+    //selectionWrapper.select("#firstSpacing")
+    //    .style("width", config.cellWidth);
     selectionWrapper.select("#thumbs")
         .style("width", config.img_width);
     selectionWrapper.select("#secondSpacing")
@@ -366,8 +366,4 @@ export function resizeIntroConv() {
         .style("width", config.img_width);
     selectionWrapper.select("#thirdSpacing")
         .style("width", config.cellWidth);
-
-    document.documentElement.style.setProperty('--thumbSize', `${config.cellWidth * 3 + 3 * 2 + 2 * 3}px`);
-    document.documentElement.style.setProperty('--kernelThumbSize', `${config.cellWidth}px`);
-    document.documentElement.style.setProperty('--kernelThumbFont', `${config.fontSize}px`);
 }
