@@ -649,10 +649,7 @@ function draw_cnn_vis(img, init_net_data=true) {
 
     init_network(img)
     if (init_net_data) {
-        // Cache all the layer data for the future
-        // Once this is run, it becomes a constant time op
-        for (let img_idx = 0; img_idx < 10; ++img_idx)
-            init_layer_data(img_idx)
+        // Cache data
         layer_data = init_layer_data(selected_img_idx)
     }
     last_img = img
@@ -706,11 +703,20 @@ function draw_cnn_vis(img, init_net_data=true) {
     if (slider_state == null) {
         slider_state = 0
     }
-    output_slider.silentValue(slider_state + 1)
+
+    let evt_trigger_state = slider_state
+    if (slider_state > 0)
+        --evt_trigger_state
+    else
+        ++evt_trigger_state
+
+    output_slider.silentValue(evt_trigger_state)
     output_slider.value(slider_state)
 
     let border_size = img_space - img_size
     let select_g = d3.select("#cnn-vis-main").append("g").attr("id", "cnn-vis-img-sel")
+    let svg_w = network[network.length - 1].x + network[network.length - 1].get_total_width() + filter_gap
+
     let indices = [...Array(10).keys()]
     select_g.attr("width", img_space * 10)
         .attr("height", img_space)
@@ -718,7 +724,7 @@ function draw_cnn_vis(img, init_net_data=true) {
         .data(indices)
         .enter()
         .append("image")
-        .attr("x", d => d * img_space)
+        .attr("x", d => svg_w / 2 - img_space * 5 + d * img_space)
         .attr("y", 0)
         .attr("href", d => `https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/Images/${classes[d].toLowerCase()}.png`)
         .attr("width", img_size)
@@ -735,7 +741,7 @@ function draw_cnn_vis(img, init_net_data=true) {
         .data([selected_img_idx])
         .enter()
         .append("rect")
-        .attr("x", d => d * img_space - border_size / 2)
+        .attr("x", d => svg_w / 2 - img_space * 5 + d * img_space - border_size / 2)
         .attr("y",  - border_size / 2)
         .attr("width", img_space)
         .attr("height", img_space)
