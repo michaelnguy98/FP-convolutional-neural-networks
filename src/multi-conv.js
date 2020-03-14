@@ -527,7 +527,7 @@ export function resizeMultiConv() {
 
     arrowStrokeWidth = fontSize / 30;
 
-    console.log("SVG width is " + svgWidth);
+    // console.log("SVG width is " + svgWidth);
 
     // SVG
     const root = d3.select("#multiConvSection")

@@ -51,9 +51,11 @@ function predict() {
         let probabilities = pred_ranked["values"].map(p => Math.min(Math.round(p * 100), 100))
         let pred_data = probabilities.map((p, i) => [p, pred_ranked["indices"][i]])
 
+        let correct_index = Math.floor(selected_img_idx / imgs_per_class)
         d3.select("#real-cnn-vis").selectAll(".net-pred")
             .data(pred_data)
             .text(d => `${(d[0] < 10 ? " " : "")}${d[0]}% - ${classes[d[1]]}`)
+            .attr("fill", (d, i) => i == 0 ? (d[1] == correct_index ? "green" : "red") : null)
             .classed("net-pred", true)
             .style("visibility", "visible")
     })
@@ -69,7 +71,7 @@ export function init_real_cnn() {
     let offset = img_space
     let img_size = w/(imgs_per_class+5)
     let border_size = img_space - img_size
-
+    
     let h = 2 * img_block_height + 3 * offset
 
     d3.select("#realCnnSection")
@@ -81,19 +83,21 @@ export function init_real_cnn() {
         .data(indices)
         .enter()
         .append("image")
-        .attr("x", d => (d % imgs_per_class) * img_space)
+        .attr("x", d => img_space / 2 + (d % imgs_per_class) * img_space)
         .attr("y", d => Math.floor(d / imgs_per_class) * img_space)
         .attr("href", d => get_cifar10_img_url(d))
         .attr("width", img_size)
         .attr("height", img_size)
-        .attr("transform", `translate(${offset}, ${offset})`)
+        //.attr("transform", `translate(${offset}, ${offset})`)
+        .attr("image-rendering", "pixelated")
         .style("cursor", "pointer")
         .on("click", d => {
             d3.select("#img-select-rect")
                 .data([d])
                 .attr("x", d => (d % imgs_per_class) * img_space - border_size / 2)
                 .attr("y", d => Math.floor(d / imgs_per_class) * img_space - border_size / 2)
-            d3.select("#selected-img-big").attr("href", get_cifar10_img_url(d))
+            selected_img_idx = d
+            d3.select("#selected-img-big").attr("href", get_cifar10_img_url(selected_img_idx))
             
             predict()
             // // Reset probabilities
@@ -117,7 +121,7 @@ export function init_real_cnn() {
         .attr("y", d => Math.floor(d / imgs_per_class) * img_space - border_size / 2)
         .attr("width", img_space)
         .attr("height", img_space)
-        .attr("transform", `translate(${offset}, ${offset})`)
+        .attr("transform", `translate(${img_space / 2}, ${0})`)
         .style("fill-opacity", "0")
         .style("stroke", "red")
         .style("stroke-width", border_size)
@@ -130,6 +134,7 @@ export function init_real_cnn() {
         .attr("height", img_block_height)
         .attr("href", get_cifar10_img_url(selected_img_idx))
         .attr("transform", `translate(${offset}, ${img_block_height + 2 * offset})`)
+        .attr("image-rendering", "pixelated")
         .attr("id", "selected-img-big")
 
     svg.selectAll("rect")
@@ -177,6 +182,7 @@ export function init_real_cnn() {
         .attr("y", (_, i) => (i + 1/2) * img_space)
         .attr("font-family", "sans-serif")
         .attr("font-size", config.fontSize)
+        .attr("font-weight", (d, i) => i == 0 ? "bold" : "normal")
         .attr("transform", `translate(${offset}, ${img_block_height + 2 * offset})`)
         .attr("dominant-baseline", "hanging")
         .classed("net-pred", true)
