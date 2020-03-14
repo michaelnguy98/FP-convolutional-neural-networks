@@ -37,9 +37,9 @@ export function load_img_channels(url, callback) {
     image.src = url;
 }
 
-function update_cnn_vis(class_name) {
-    let url = `https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/Images/${class_name.toLowerCase()}.png`
-    load_img_channels(url, img => draw_cnn_vis(img, class_name))
+function update_cnn_vis() {
+    let url = `https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/Images/${classes[selected_img_idx].toLowerCase()}.png`
+    load_img_channels(url, img => draw_cnn_vis(img))
 }
 
 export function init_cnn_vis() {
@@ -54,6 +54,10 @@ export function init_cnn_vis() {
         .attr("id", "cnn-vis-main")
 
     update_cnn_vis("Dog")
+}
+
+export function resize_cnn_vis() {
+    draw_cnn_vis(null, false)
 }
 
 function flatten(a) {
@@ -462,16 +466,26 @@ function shuffle(arr) {
 }
 
 let selected_img_idx = classes.indexOf("Dog")
+let ticks = 64 * 5
+let network = null
+let layer_data = null
+let last_img = null
+let slider_state = null
+let range_half_size = ticks / 10
+let slider_correct_idx = Math.floor(Math.random() * (2 + range_half_size * 2)) + (ticks / 2 - range_half_size - 1)
+slider_correct_idx += slider_correct_idx % 2
 
-function draw_cnn_vis(img, class_name) {
-    d3.select("#cnn-vis-main").selectAll("*").remove()
+// Sizing
+let filter_gap = null
+let img_size = null
+let img_space = null
 
-    let network = []
-    
+function init_network(img) {
+    network = []
     let goal_width = config.svgWidth
 
     var size = (goal_width + 30 * 8 - 18) / (15/4 + 7/4/Math.sqrt(2) + Math.sqrt(3)/16 + 9/8)
-    var filter_gap = (size - 64) / 8
+    filter_gap = (size - 64) / 8
     var x_start = filter_gap
 
     network.push(make_centered_layer(x_start, size, size, 32, 3, filter_gap, 2, true))
@@ -482,10 +496,9 @@ function draw_cnn_vis(img, class_name) {
     // Make svg/g container large enough to fit network
     let w = network[network.length - 1].x + network[network.length - 1].get_total_width() + filter_gap
     
-    let img_space = w / (16 + 1)
-    let img_size = w/(16 + 1 + 2)
-    let border_size = img_space - img_size
-
+    img_space = w / (16 + 1)
+    img_size = w/(16 + 1 + 2)
+    
     let h = network[0].get_total_height() + 2 * filter_gap
 
     d3.select("#cnn-vis-main").attr("width", w).attr("height", h + img_space)
@@ -520,9 +533,14 @@ function draw_cnn_vis(img, class_name) {
     network[2].draw(svg, pooled_tensor.squeeze(-1).arraySync())
     
     network[3].draw(svg, null)
+}
 
-    // ------- Sliders -------
-    let correct_index = classes.indexOf(class_name)
+let data_cache = [...Array(10)].map(() => null)
+function init_layer_data(img_idx) {
+    let correct_index = img_idx
+    if (data_cache[correct_index] != null) {
+        return data_cache[correct_index]
+    }
 
     let initial_data = [...Array(10)].map(() => Math.random() * 0.9 + 0.1) // Initialize all to start in [0.1, 1)
 
@@ -535,18 +553,13 @@ function draw_cnn_vis(img, class_name) {
 
     initial_data[correct_index] = Math.random() * 0.25 + 0.25 // Make this one extra low, [0.25, 0.5)
 
-    let ticks = 64 * 5
-    let range_half_size = ticks / 10
-    let n = Math.floor(Math.random() * (2 + range_half_size * 2)) + (ticks / 2 - range_half_size - 1)
-    n += n % 2
-
-    let down = n / 2 + ((n/2) % 2)
-    let k = (1/2) * (n - down)
+    let down = slider_correct_idx / 2 + ((slider_correct_idx/2) % 2)
+    let k = (1/2) * (slider_correct_idx - down)
 
     let deltas = initial_data.map(d => d / down)
     deltas[correct_index] = deltas[correct_index] - 1/down
     
-    let moves_pre = [...Array(10)].map((_, i) => [0].concat(shuffle([...Array(n)].map((_, j) => {
+    let moves_pre = [...Array(10)].map((_, i) => [0].concat(shuffle([...Array(slider_correct_idx)].map((_, j) => {
         let d = deltas[i]
         if (j < down + k) {
             return -d
@@ -565,7 +578,7 @@ function draw_cnn_vis(img, class_name) {
     end_data[index] = Math.random() * 0.1 + 0.9
 
     end_data[correct_index] = Math.random() * 0.25 + 0.25 // Make this one extra low, [0.25, 0.5)
-    let n_post = ticks - n
+    let n_post = ticks - slider_correct_idx
     let down_post = n_post / 2 + ((n_post/2) % 2)
     let k_post = (1/2) * (n_post - down_post)
 
@@ -583,16 +596,15 @@ function draw_cnn_vis(img, class_name) {
 
     let moves = [...Array(10)].map((_, i) => moves_pre[i].concat(moves_post[i]))
     
-
     // Need to precompute these since ticks get skipped apparently and we want the randomness
     // to always be the same
-    let layer_data = [...Array(3)].map(() => [...Array(ticks + 1)])
-    layer_data[2][0] = initial_data
+    let new_layer_data = [...Array(3)].map(() => [...Array(ticks + 1)])
+    new_layer_data[2][0] = initial_data
     for (let t = 0; t <= ticks; ++t) {
-        let scale = Math.min(n, ticks - n)
+        let scale = Math.min(slider_correct_idx, ticks - slider_correct_idx)
 
         // Probability of randomly re-assigning a given pixel
-        let p = Math.abs(t - n) / scale
+        let p = Math.abs(t - slider_correct_idx) / scale
 
         // Scramble layer 1
         let layer_1_data = network[1].original_data
@@ -608,22 +620,43 @@ function draw_cnn_vis(img, class_name) {
             }
         }
 
-        layer_data[0][t] = layer_1_scramble
+        new_layer_data[0][t] = layer_1_scramble
 
+        let pool_2d = create_average_pool_2d(4)
         let pooled_scramble = pool_2d.apply(tf.tensor(layer_1_scramble).expandDims(-1))
-        layer_data[1][t] = pooled_scramble.squeeze(-1).arraySync()
+        new_layer_data[1][t] = pooled_scramble.squeeze(-1).arraySync()
 
 
         if (t > 0) { // First entry is initial data
-            let copy = layer_data[2][t - 1].slice(0)
+            let copy = new_layer_data[2][t - 1].slice(0)
             for (let j = 0; j < 10; ++j) {
                 copy[j] += moves[j][t]
             }
     
-            layer_data[2][t] = copy
+            new_layer_data[2][t] = copy
         }
     }
 
+    data_cache[correct_index] = new_layer_data
+    return new_layer_data
+}
+
+function draw_cnn_vis(img, init_net_data=true) {
+    d3.select("#cnn-vis-main").selectAll("*").remove()
+
+    if (img == null)
+        img = last_img
+
+    init_network(img)
+    if (init_net_data) {
+        // Cache all the layer data for the future
+        // Once this is run, it becomes a constant time op
+        for (let img_idx = 0; img_idx < 10; ++img_idx)
+            init_layer_data(img_idx)
+        layer_data = init_layer_data(selected_img_idx)
+    }
+    last_img = img
+    
     for (let i = 0; i < 3; ++i) {
         d3.select("#cnn-vis")
             .append("text")
@@ -636,10 +669,13 @@ function draw_cnn_vis(img, class_name) {
             .attr("id", "pred_" + i)
     }
 
+    let svg = d3.select("#cnn-vis")
     let output_slider = d3_slider.sliderHorizontal().min(0).max(ticks).width(network[3].x - network[1].x).ticks(0).step(1).displayValue(false).on("onchange", function(s) {
         if (this.prev != undefined && Math.abs(s - this.prev) < 1e-2) {
             return
         }
+
+        slider_state = s
 
         network[1].redraw(svg, layer_data[0][s])
         network[2].redraw(svg, layer_data[1][s])
@@ -652,7 +688,7 @@ function draw_cnn_vis(img, class_name) {
             let percent = Math.min(Math.round(sorted[i][1] * 100), 100)
             let percent_str = `${(percent < 10 ? " " : "")}${percent}% - ${classes[sorted[i][0]]}`
             d3.select("#pred_" + i).text(percent_str)
-                .attr("fill", i == 0 ? (sorted[i][0] == correct_index ? "green" : "red") : null)
+                .attr("fill", i == 0 ? (sorted[i][0] == selected_img_idx ? "green" : "red") : null)
         }
 
         network[3].redraw(svg, layer_data[2][s].map(d => [[d * 255]]))
@@ -660,39 +696,20 @@ function draw_cnn_vis(img, class_name) {
         this.prev = s
     });
 
+    let h = network[0].get_total_height() + 2 * filter_gap
     d3.select("#cnn-vis-main")
         .append("g")
         .attr("transform", `translate(${network[1].x}, ${img_space + (h/2 - network[1].get_total_height() / 2) / 2})`)
         .attr("id", "slider-1")
         .call(output_slider);
 
-    output_slider.silentValue(1)
-    output_slider.value(0)
+    if (slider_state == null) {
+        slider_state = 0
+    }
+    output_slider.silentValue(slider_state + 1)
+    output_slider.value(slider_state)
 
-    // This is not part of the svg, so we have to remove it manually here
-    // d3.select("#img-select").remove()
-    // let select = d3.select("#userTrainSection").insert("select", "#cnn-vis-main")
-    //     .attr("id", "img-select")
-    //     .style("left", filter_gap)
-    //     .style("top", filter_gap)
-    //     .style("position", "absolute")
-    //     .style("float", "left")
-    //     .style("font-size", config.fontSize)
-
-    // select.selectAll("option")
-    //     .data(classes)
-    //     .enter()
-    //     .append("option")
-    //     .attr("value", d => d)
-    //     .text(d => d)
-    
-    // select.property("value", class_name).on("change", () => {
-    //     let selected_class = d3.select("#img-select").property("value")
-    //     console.log(selected_class)
-    //     update_cnn_vis(selected_class)
-    // })
-
-    console.log("cnn ", img_size)
+    let border_size = img_space - img_size
     let select_g = d3.select("#cnn-vis-main").append("g").attr("id", "cnn-vis-img-sel")
     let indices = [...Array(10).keys()]
     select_g.attr("width", img_space * 10)
@@ -711,7 +728,7 @@ function draw_cnn_vis(img, class_name) {
         .style("cursor", "pointer")
         .on("click", d => {
             selected_img_idx = d
-            update_cnn_vis(classes[selected_img_idx])
+            update_cnn_vis()
         })
 
     select_g.selectAll("rect")
