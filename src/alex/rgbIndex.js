@@ -15,39 +15,14 @@ function init() {
     buildrgb("https://raw.githubusercontent.com/UW-CSE442-WI20/A3-convolutional-neural-networks/michan4-v2/Images/truck.png", x => drawRGB(x))
 }
 
-function buildrgb(src, func) {
-    const canvas = document.getElementById('input');
-    const context = canvas.getContext('2d');
-
-    const image = new Image();
-    
-    image.onload = () => {
-        canvas.width = image.width;
-        canvas.height = image.height;
-
-        let img = [...Array(3)].map(() => [...Array(canvas.height)].map(() => [...Array(canvas.width)].map(() => 0)));
-
-        context.drawImage(image, 0, 0);
-
-        const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-        for (let i = 0; i < imgData.data.length; i += 4) {
-            let x = (i / 4) % canvas.width;
-            let y = Math.floor((i / 4) / canvas.width);
-            for (let j = 0; j < 3; ++j) {
-                img[j][y][x] = imgData.data[i + j]
-            }
-        }
-
-        func(img)
-    }
-
-    image.crossOrigin = "Anonymous";
-    image.src = src;
-}
-
 function drawRGB(img) {
     let g = d3.select("#rgbG")
+
+    let tw = 0
+    if (window.innerWidth > 900) {
+        tw = (window.innerWidth - 856) / 2
+    }
+    
 
     g.selectAll("text")
         .data([0, 0, 0])
@@ -55,12 +30,12 @@ function drawRGB(img) {
         .append("text")
         .attr("x", function(d, i) {
             if (i == 0) {
-                return 110
+                return tw + 110
             }
             if (i == 1) {
-                return 410
+                return tw + 410
             }
-            return 710
+            return tw + 710
         })
         .attr("y", 290)
         .attr("fill", function(d, i) {
@@ -93,7 +68,7 @@ function drawRGB(img) {
         .enter()
         .append("rect")
         .attr("x", function(d, i) {
-            return 300 + (i % n) * w
+            return tw + 300 + (i % n) * w
         })
         .attr("y", function(d, i) {
             return (Math.floor(i / n)) * h
@@ -130,7 +105,7 @@ function drawRGB(img) {
                 .enter()
                 .append("rect")
                 .attr("x", function(d) {
-                    return d * 300 + (i % n) * w
+                    return tw + d * 300 + (i % n) * w
                 })
                 .attr("y", function(d) {
                     return 300 + (Math.floor(i / n)) * h
@@ -148,11 +123,48 @@ function drawRGB(img) {
         .classed("squareO", true);
     
     for (let i = 0; i < 3; ++i) {
-        draw_box(g, img, i * 300, 300, s, n, i);
+        draw_box(g, img, tw + (i * 300), 300, s, n, i);
     }
 }
 
+function buildrgb(src, func) {
+    const canvas = document.getElementById('input');
+    const context = canvas.getContext('2d');
+
+    const image = new Image();
+    
+    image.onload = () => {
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        let img = [...Array(3)].map(() => [...Array(canvas.height)].map(() => [...Array(canvas.width)].map(() => 0)));
+
+        context.drawImage(image, 0, 0);
+
+        const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < imgData.data.length; i += 4) {
+            let x = (i / 4) % canvas.width;
+            let y = Math.floor((i / 4) / canvas.width);
+            for (let j = 0; j < 3; ++j) {
+                img[j][y][x] = imgData.data[i + j]
+            }
+        }
+
+        func(img)
+    }
+
+    image.crossOrigin = "Anonymous";
+    image.src = src;
+}
+
 function draw_box(g, img, x, y, s, n, index) {
+
+    let tw = 0
+    if (window.innerWidth > 900) {
+        tw = (window.innerWidth - 856) / 2
+    }
+
     let data = img[index]
     let w = s / n
     let h = s / n
@@ -199,9 +211,9 @@ function draw_box(g, img, x, y, s, n, index) {
                 .append("rect")
                 .attr("x", function(d) {
                     if (d == index) {
-                        return 300 + (i % n) * w
+                        return tw + 300 + (i % n) * w
                     }
-                    return d * 300 + (i % n) * w
+                    return tw + d * 300 + (i % n) * w
                 })
                 .attr("y", function(d) {
                     if (d == index) {

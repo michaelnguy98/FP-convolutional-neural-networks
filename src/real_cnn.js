@@ -15,8 +15,8 @@ let imgs_per_class = 32
 let selected_img_idx =Math.floor(Math.random() * (num_classes * imgs_per_class))
 let current_pred_data = [...Array(num_classes)].map((_, i) => [0, i])
 
-let tf_model_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/tfjs_model/model.json"
-let cifar_10_images_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/images/"
+let tf_model_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/src/cifar10/tfjs_model/model.json"
+let cifar_10_images_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/src/cifar10/images/"
 
 async function load_model() {
     model = await tf.loadLayersModel(tf_model_url)
@@ -125,7 +125,7 @@ function update_real_cnn() {
         .enter()
         .append("rect")
         .attr("x", d => (d % imgs_per_class) * img_space - border_size / 2)
-        .attr("y", d => Math.floor(d / imgs_per_class) * img_space - border_size / 2)
+        .attr("y", d => (Math.floor(d / imgs_per_class) + 1) * img_space - border_size / 2)
         .attr("width", img_space)
         .attr("height", img_space)
         .attr("transform", `translate(${img_space / 2}, ${0})`)

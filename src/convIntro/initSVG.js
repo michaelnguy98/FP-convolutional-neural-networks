@@ -356,8 +356,8 @@ export function resizeIntroConv() {
 
     const selectionWrapper = d3.select("#convIntroSection")
         .select("#selectionWrapper");
-    selectionWrapper.select("#firstSpacing")
-        .style("width", config.cellWidth);
+    //selectionWrapper.select("#firstSpacing")
+    //    .style("width", config.cellWidth);
     selectionWrapper.select("#thumbs")
         .style("width", config.img_width);
     selectionWrapper.select("#secondSpacing")
