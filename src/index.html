@@ -84,22 +84,22 @@
         </p>
       </div>
       <p class="textContent">
-        The ability to recognize and categorize objects in our everyday life come very naturally to humans.
-        When you walk down the street, you probably can distinguish what the various objects that you encounter
-        are. You can find people walking their dogs, various cars driving down the road and airplanes flying
+        The ability to recognize and categorize objects in our everyday life comes very naturally to humans.
+        When you walk down the street, you can easily distinguish what the various objects that you encounter
+        are. You can see people walking their dogs, various cars driving down the road and airplanes flying
         across the sky. What if we wanted machines to recognize these objects? If we had a lot of images we
-        needed to analyze and categorize, we could use machines to automate this task. Let's take a look into
-        how image recognition is carried out! 
+        want to analyze and categorize, we could use machines to automate this task. Let's take a look into
+        how image recognition and classification works! 
       </p>
       <p class="textContentTitle">
-        How are we representing an image?
+        How are images represented?
       </p>
       <p class="textContent">
-        Your eyes register colors as a combination of red, green and blue light. Computers also display colors
+        Your eyes register colors as a combination of red, green and blue light. Computers also store and display colors
         using red, green and blue. Every pixel on the screen you are seeing right now can be represented by just
-        three values. For example the color of this fuchsia <span style="color:fuchsia">██</span> has red's
-        brightness set to 255, green's brightness set to 0 and blue's brightness set to 255. We would say that
-        the RGB values for this color is (255, 0, 255). To display the fuchsia, your computer would then use an 
+        three values. For example the color of fuchsia <span style="color:fuchsia">██</span> has a red value of
+        255, a green value of 0 and a blue value of 255. We would say that
+        the RGB value for this color is (255, 0, 255). To display fuchsia, your computer would then use an 
         <a href="https://en.wikipedia.org/wiki/Additive_color" target="_blank">additive process</a> to blend these
         values together. Experiment with the puppy below to see how it works!
       </p>
@@ -115,7 +115,7 @@
         In the context of image processing, convolutions are the process of combining the pixels of an image
         with its local neighbors, weighted by something called a
         "<a href="https://en.wikipedia.org/wiki/Kernel_(image_processing)" target="_blank">Kernel</a>".
-        Experiment with the visual below to see how these convolutions are calculated. The left matrix
+        Experiment with the visual below to see how convolutions are calculated. The left matrix
         represents a portion of an image and the right matrix represents the values in our kernel.
       </p>
     </div>
@@ -128,10 +128,10 @@
       </p>
       <p class="textContent">
         Kernels can have different values depending on the features we want to extract.
-        There are kernels that are designed to sharpen images and even detect edges!
-        How does an image look after we run some simple convs? Experiment with the
-        visualization below to see how a convolution is calculated. An image is represented
-        on the left and the resulting convolved image is on the left.
+        There are kernels that are designed to sharpen images and even to detect edges!
+        How does an image look after we apply those convolutions to the entire image? Experiment with the
+        visualization below to see how convolutions are calculated and what the resulting convolved images look like.
+        The original image is on the left and the resulting convolved image is on the right.
       </p>
     </div>
 
@@ -139,12 +139,12 @@
 
     <div class="textContentWrapper">
       <p class="textContentTitle">
-        Layering convolutions
+        Stacking convolutions
       </p>
       <p class="textContent">
         We can also construct a "network" of convolutions that feed into each other;
-        i.e. convolving an image that's already been convolved once.
-        Some of these convolutions give great analysis of the images as-is, why not string multiple together?
+        i.e. convolving an image that's already been convolved before.
+        Some of these convolutions give great analysis of the images as-is, so why not string multiple together?
         We might be able to detect even more specific features with this method. Experiment with the
         visualization below to see how this could be helpful.
       </p>
@@ -175,7 +175,7 @@
 
     <div class="textContentWrapper">
       <p class="textContentTitle">
-        Final destination
+        A real convolutional neural network
       </p>
       <p class="textContent">
         In reality, we don't tune the networks manually like this. Usually, the computer will adjust these values automatically, using a process called "<a href="https://en.wikipedia.org/wiki/Backpropagation" target="_blank">Backpropogation</a>".
@@ -186,7 +186,7 @@
 
     <div class="textContentWrapper">
       <p class="textContent">
-        Below you'll find a fully trained network, similar to <a href="https://towardsdatascience.com/vgg-neural-networks-the-next-step-after-alexnet-3f91fa9ffe2c" target="_blank">VGG</a>.
+        Below you'll find a small fully trained network that runs directly inside of your browser. The network is similar to the <a href="https://towardsdatascience.com/vgg-neural-networks-the-next-step-after-alexnet-3f91fa9ffe2c" target="_blank">VGG</a> architecture.
         There are 32 images from each of the 10 classes that the network has never seen before. Click on any image to select it and have the network predict what the image is.
         Try to find some images that the network classifies correctly and some that it misclassifies!
       </p>
