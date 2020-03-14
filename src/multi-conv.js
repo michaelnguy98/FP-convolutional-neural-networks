@@ -545,8 +545,7 @@ export function resizeMultiConv() {
     
     // Visualization section
     const convLayerWrappers = root.selectAll(".convLayerWrapper")
-        .attr("transform", (_, i) => `translate(${imageWidth + startImageX + (groupWidth * i)}, ${imageSectionY + (0.3 * imageSectionHeight)})`)
-        .attr("opacity", 1.0);
+        .attr("transform", (_, i) => `translate(${imageWidth + startImageX + (groupWidth * i)}, ${imageSectionY + (0.3 * imageSectionHeight)})`);
               
     convLayerWrappers.selectAll("line")
         .attr("x1", arrowX1)
