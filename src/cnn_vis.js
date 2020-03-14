@@ -706,7 +706,14 @@ function draw_cnn_vis(img, init_net_data=true) {
     if (slider_state == null) {
         slider_state = 0
     }
-    output_slider.silentValue(slider_state + 1)
+
+    let evt_trigger_state = slider_state
+    if (slider_state > 0)
+        --evt_trigger_state
+    else
+        ++evt_trigger_state
+
+    output_slider.silentValue(evt_trigger_state)
     output_slider.value(slider_state)
 
     let border_size = img_space - img_size
