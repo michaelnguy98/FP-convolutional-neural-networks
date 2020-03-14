@@ -16,19 +16,19 @@ let unified = false;
 const separateDuration = 2000;
 
 // Margin between images(also padding on side and top and separating the button)
-const margin = config.kernelCellWidth;
+let margin = config.kernelCellWidth;
 
 // Image height and width
-const imgWidth = 5 * config.kernelCellWidth;
-const imgHeight = 5 * config.kernelCellHeight;
+let imgWidth = 5 * config.kernelCellWidth;
+let imgHeight = 5 * config.kernelCellHeight;
 
 // button height and width
-const buttonWidth = config.cellWidth * 5;
-const buttonHeight = config.cellHeight * 2;
+let buttonWidth = config.cellWidth * 5;
+let buttonHeight = config.cellHeight * 2;
 
 // SVG height and width
-const svgWidth = imgWidth * 3 + margin * 4;
-const svgHeight = imgHeight + margin * 3 + buttonHeight;
+let svgWidth = imgWidth * 3 + margin * 4;
+let svgHeight = imgHeight + margin * 3 + buttonHeight;
 
 /**
  * Initialize the SVG.
@@ -94,7 +94,7 @@ function initSVG() {
         .attr("id", "buttonWrapper")
         .attr("transform", `translate(${(svgWidth - buttonWidth) / 2}, ${margin * 2 + imgHeight})`)
         .style("cursor", "pointer")
-        .on("click", updateFrame);
+        .on("click", fragmentOrUnify);
     // Button Color
     buttonWrapper.append("rect")
         .attr("width", buttonWidth)
@@ -109,8 +109,7 @@ function initSVG() {
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("font-family", "sans-serif")
-        .attr("font-size", config.fontSize)
-        .text("Next");
+        .attr("font-size", config.fontSize);
 }
 
 /**
@@ -122,7 +121,7 @@ function updateFrame(useTransition = true) {
     const animation = useTransition ?
         d3.transition().duration(separateDuration).ease(d3.easeCubic) :
         d3.transition().duration(0);
-
+        
     if (unified) {
         d3.select("#animateRGBSvg")
             .select("#buttonText")
@@ -154,8 +153,6 @@ function updateFrame(useTransition = true) {
             .transition(animation)
             .attr("x", margin * 2 + imgWidth)
             .attr("y", margin);
-
-        unified = false;
     } else {
         d3.select("#animateRGBSvg")
             .select("#buttonText")
@@ -187,9 +184,12 @@ function updateFrame(useTransition = true) {
             .transition(animation)
             .attr("x", margin * 3 + imgWidth * 2)
             .attr("y", margin);
-
-        unified = true;
     }
+}
+
+function fragmentOrUnify() {
+    unified = !unified;
+    updateFrame();
 }
 
 function disableButton() {
@@ -210,5 +210,60 @@ function enableButton() {
     d3.select("#animateRGBSvg")
         .select("#buttonWrapper")
         .style("cursor", "pointer")
-        .on("click", updateFrame);
+        .on("click", fragmentOrUnify);
+}
+
+export function resizeAnimateRGB() {
+    margin = config.kernelCellWidth;
+
+    imgWidth = 5 * config.kernelCellWidth;
+    imgHeight = 5 * config.kernelCellHeight;
+    // console.log(imgWidth);
+
+    buttonWidth = config.cellWidth * 5;
+    buttonHeight = config.cellHeight * 2;
+
+    svgWidth = imgWidth * 3 + margin * 4;
+    svgHeight = imgHeight + margin * 3 + buttonHeight;
+
+    const root = d3.select("#animateRGBSection")
+        .select("#animateRGBSvg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
+    
+    root.select("#backR")
+        .attr("width", imgWidth)
+        .attr("height", imgHeight);
+    root.select("#backG")
+        .attr("width", imgWidth)
+        .attr("height", imgHeight);
+    root.select("#backB")
+        .attr("width", imgWidth)
+        .attr("height", imgHeight);
+
+    // RGB channel images
+    root.select("#imgR")
+        .attr("width", imgWidth)
+        .attr("height", imgHeight);
+    root.select("#imgG")
+        .attr("width", imgWidth)
+        .attr("height", imgHeight);
+    root.select("#imgB")
+        .attr("width", imgWidth)
+        .attr("height", imgHeight);
+
+    // Button Wrapper
+    const buttonWrapper = root.select("#buttonWrapper")
+        .attr("transform", `translate(${(svgWidth - buttonWidth) / 2}, ${margin * 2 + imgHeight})`);
+    // Button Color
+    buttonWrapper.select("#buttonColor")
+        .attr("width", buttonWidth)
+        .attr("height", buttonHeight);
+    // Button Text
+    buttonWrapper.select("#buttonText")
+        .attr("x", buttonWidth / 2)
+        .attr("y", buttonHeight / 2)
+        .attr("font-size", config.fontSize);
+
+    updateFrame(false);
 }
