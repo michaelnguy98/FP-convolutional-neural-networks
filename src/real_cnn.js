@@ -12,7 +12,7 @@ let model = null
 let num_classes = 10
 let imgs_per_class = 32
 
-let selected_img_idx =Math.floor(Math.random() * (num_classes * imgs_per_class))
+let selected_img_idx = Math.floor(Math.random() * (num_classes * imgs_per_class))
 let current_pred_data = [...Array(num_classes)].map((_, i) => [0, i])
 
 let tf_model_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/master/src/cifar10/tfjs_model/model.json"
@@ -61,6 +61,7 @@ function predict() {
 
 function update_probability_display(pred_data, correct_index) {
     current_pred_data = pred_data
+    console.log(correct_index)
     d3.select("#real-cnn-vis").selectAll(".net-pred")
         .data(pred_data)
         .text(d => `${(d[0] < 10 ? " " : "")}${d[0]}% - ${classes[d[1]]}`)
@@ -193,7 +194,7 @@ function update_real_cnn() {
         .classed("net-pred", true)
         .style("visibility", "hidden")
     
-    update_probability_display(current_pred_data, selected_img_idx)
+    update_probability_display(current_pred_data, Math.floor(selected_img_idx / imgs_per_class))
 }
 
 export function init_real_cnn() {
