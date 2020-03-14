@@ -692,7 +692,6 @@ function draw_cnn_vis(img, class_name) {
     //     update_cnn_vis(selected_class)
     // })
 
-    console.log("cnn ", img_size)
     let select_g = d3.select("#cnn-vis-main").append("g").attr("id", "cnn-vis-img-sel")
     let indices = [...Array(10).keys()]
     select_g.attr("width", img_space * 10)

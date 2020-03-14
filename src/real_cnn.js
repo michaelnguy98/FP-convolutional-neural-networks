@@ -88,14 +88,14 @@ export function init_real_cnn() {
         .attr("href", d => get_cifar10_img_url(d))
         .attr("width", img_size)
         .attr("height", img_size)
-        //.attr("transform", `translate(${offset}, ${offset})`)
+        .attr("transform", `translate(${0}, ${offset})`)
         .attr("image-rendering", "pixelated")
         .style("cursor", "pointer")
         .on("click", d => {
             d3.select("#img-select-rect")
                 .data([d])
                 .attr("x", d => (d % imgs_per_class) * img_space - border_size / 2)
-                .attr("y", d => Math.floor(d / imgs_per_class) * img_space - border_size / 2)
+                .attr("y", d => (Math.floor(d / imgs_per_class) + 1) * img_space - border_size / 2)
             selected_img_idx = d
             d3.select("#selected-img-big").attr("href", get_cifar10_img_url(selected_img_idx))
             

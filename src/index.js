@@ -5,25 +5,28 @@ import {initAnimateRGBSection, resizeAnimateRGB} from './animateRGB';
 import {recalculateConfig} from './config';
 import {resizeIntroConv} from './convIntro/initSVG';
 import {init_cnn_vis} from './cnn_vis';
-import {init_real_cnn} from './real_cnn'
+import {init_real_cnn} from './real_cnn';
+import * as config from "./config";
 
 function loadSections() {
-  initAnimateRGBSection();
-  initAnimateMathSection();
-  initMultiConvSection();
-  initConvIntroSection();
-  init_cnn_vis();
-  init_real_cnn();
+    recalculateConfig();
+    
+    initAnimateRGBSection();
+    initAnimateMathSection();
+    initMultiConvSection();
+    initConvIntroSection();
+    init_cnn_vis();
+    init_real_cnn();
 }
 
 function onResize() {
-  recalculateConfig();
-  
-  resizeAnimateRGB();
-  resizeAnimateMath();
-  resizeIntroConv();
+    recalculateConfig();
+    
+    resizeAnimateRGB();
+    resizeAnimateMath();
+    resizeIntroConv();
 
-  resizeMultiConv()
+    resizeMultiConv();
 }
 
 window.onload = loadSections;
