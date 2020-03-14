@@ -138,9 +138,17 @@
         Title
       </p>
       <p class="textContent">
-        We would like our computer to guess what it is seeing accurately as possible.
-        Go ahead and adjust the slider below and try and help the model correctly predict this dog.
-        By adjusting the slider, you are changing the values within the image convolutions.
+        Below is a simple neural network for classifying a picture as one of ten categories: Plane, Car, Bird, Car, Deer, Dog, Frog, Horse, Ship and Truck. Hover over the pixels
+        in any layer to see the path of a pixel through the network. Both the relevant pixel and the kernel are highlighted in alternating colors at each layer.
+      </p>
+      <p>
+        On the right the top 3 predicted probabilities of each class are displayed. Right now the network predicts the class of the image horribly wrong.
+        Use the slider to adjust the weights of the network so that the network predicts the image to be a dog with 100% probability and everything else with 0% probability.
+        As you adjust the slider, watch the networks prediction and note how the output of the first convolution becomes more and more similar the convolved images we saw earlier. This means the network is learning
+        useful kernels.
+      </p>
+      <p>
+        Once you are done, try selecting some of the other images above!
       </p>
     </div>
 
@@ -151,10 +159,21 @@
         Title
       </p>
       <p class="textContent">
-        Now we have a network that can correctly identify this dog!
-        However, it would be nice to have our network adjust the slider automatically without our help.
-        Luckily, there is a technique called "Back-propagation"(link) that works similarly to what you did when adjusting the slider!
-        The computer will make some predictions and it will move the slider in the direction that seems to best predict the dog.
+        In reality, we don't tune the networks manually like this. Most commonly an algorithm called Backpropagation is used. It uses the network to predict an image
+        and then based on how wrong the prediction is, the weights of the network are adjusted so that the network predicts the image correctly. Through this process, the
+        network is able to automatically learn complex kernels that extract useful information from images.
+      </p>
+    </div>
+
+    <div class="textContentWrapper">
+      <p class="textContentTitle">
+        Title
+      </p>
+      <p class="textContent">
+        Through backpropagation, we trained a convolutional neural network to predict an images as one of the 10 classes.
+        This small convolutional neural network is run directly in your browser.
+        Below are 32 images from each of the 10 classes that the network has never seen before. Click on any image to select it and have the network predict what the image is.
+        Try to find some images that the network classifies correctly and some that it misclassifies!
       </p>
     </div>
       

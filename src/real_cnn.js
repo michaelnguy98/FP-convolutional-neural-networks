@@ -125,7 +125,7 @@ function update_real_cnn() {
         .enter()
         .append("rect")
         .attr("x", d => (d % imgs_per_class) * img_space - border_size / 2)
-        .attr("y", d => Math.floor(d / imgs_per_class) * img_space - border_size / 2)
+        .attr("y", d => (Math.floor(d / imgs_per_class) + 1) * img_space - border_size / 2)
         .attr("width", img_space)
         .attr("height", img_space)
         .attr("transform", `translate(${img_space / 2}, ${0})`)
