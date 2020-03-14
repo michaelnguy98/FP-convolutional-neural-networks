@@ -83,17 +83,26 @@
           <span style="color: white;">CN</span>Networks
         </p>
       </div>
-      <p class="textContentTitle">
-        Motivation
-      </p>
       <p class="textContent">
-        Motivation blah blah blah
+        The ability to recognize and categorize objects in our everyday life come very naturally to humans.
+        When you walk down the street, you probably can distinguish what the various objects that you encounter
+        are. You can find people walking their dogs, various cars driving down the road and airplanes flying
+        across the sky. What if we wanted machines to recognize these objects? If we had a lot of images we
+        needed to analyze and categorize, we could use machines to automate this task. Let's take a look into
+        how image recognition is carried out! 
       </p>
       <p class="textContentTitle">
         How are we representing an image?
       </p>
       <p class="textContent">
-        What is RGB?
+        Your eyes register colors as a combination of red, green and blue light. All the colors that we can see
+        are just a combination of different amounts of red, green and blue light. Computers also display colors
+        with these three colors. Every pixel on the screen you are using right now can be represented by just
+        three values. For example the color of this fuchsia <span style="color:fuchsia">██</span> has red's
+        brightness set to 255, green's brightness set to 0 and blue's brightness set to 255. We would say that
+        the RGB values for this color is (255, 0, 255). To display the fuchsia, your computer would then use an 
+        <a href="https://en.wikipedia.org/wiki/Additive_color" target="_blank">additive process</a> to blend these
+        values together. Experiment with the puppy below to see how it works!
       </p>
     </div>
 
@@ -104,7 +113,11 @@
         Now, what is a convolution?
       </p>
       <p class="textContent">
-        What is the math and why do we do it instead of other methods like FC?
+        In the context of image processing, convolutions are the process of combining the pixels of an image
+        with its local neighbors, weighted by something called a
+        "<a href="https://en.wikipedia.org/wiki/Kernel_(image_processing)" target="_blank">Kernel</a>".
+        Experiment with the visual below to see how these convolutions are calculated. The left matrix
+        represents a portion of an image and the right matrix represents the values in our kernel.
       </p>
     </div>
 
@@ -112,10 +125,14 @@
     
     <div class="textContentWrapper">
       <p class="textContentTitle">
-        Title
+        The bigger picture
       </p>
       <p class="textContent">
-        How does an image look after we run some simple convs?
+        Kernels can have different values depending on the features we want to extract.
+        There are kernels that are designed to sharpen images and even detect edges!
+        How does an image look after we run some simple convs? Experiment with the
+        visualization below to see how a convolution is calculated. An image is represented
+        on the left and the resulting convolved image is on the left.
       </p>
     </div>
 
@@ -123,11 +140,14 @@
 
     <div class="textContentWrapper">
       <p class="textContentTitle">
-        Title
+        Layering convolutions
       </p>
       <p class="textContent">
-        Using convolutions, we can construct a "network" of convolutions that feed into each other; i.e. convolving an image that's already been convolved once.
-        Some of these convolutions give great analysis of the images as-is, why string multiple together?
+        Using convolutions, we can construct a "network" of convolutions that feed into each other;
+        i.e. convolving an image that's already been convolved once.
+        Some of these convolutions give great analysis of the images as-is, why not string multiple together?
+        We might be able to detect even more specific features with this method. Experiment with the
+        visualization below to see how this could be helpful.
       </p>
     </div>
 
