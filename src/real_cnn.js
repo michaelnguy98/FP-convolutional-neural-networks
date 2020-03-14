@@ -61,7 +61,6 @@ function predict() {
 
 function update_probability_display(pred_data, correct_index) {
     current_pred_data = pred_data
-    console.log(correct_index)
     d3.select("#real-cnn-vis").selectAll(".net-pred")
         .data(pred_data)
         .text(d => `${(d[0] < 10 ? " " : "")}${d[0]}% - ${classes[d[1]]}`)
