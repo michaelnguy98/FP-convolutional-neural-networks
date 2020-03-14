@@ -7,11 +7,13 @@ import "babel-polyfill"
 let classes = ["Plane", "Car", "Bird", "Cat", "Deer", "Dog", "Frog", "Horse", "Ship", "Truck"]
 let real_class_map = {"Plane" : "Airplane", "Car" : "Automobile"}
 
-let selected_img_idx = -1
 let model = null
 
 let num_classes = 10
 let imgs_per_class = 32
+
+let selected_img_idx =Math.floor(Math.random() * (num_classes * imgs_per_class))
+let current_pred_data = [...Array(num_classes)].map((_, i) => [0, i])
 
 let tf_model_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/tfjs_model/model.json"
 let cifar_10_images_url = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/tobi_cnn_vis_2/src/cifar10/images/"
@@ -52,16 +54,21 @@ function predict() {
         let pred_data = probabilities.map((p, i) => [p, pred_ranked["indices"][i]])
 
         let correct_index = Math.floor(selected_img_idx / imgs_per_class)
-        d3.select("#real-cnn-vis").selectAll(".net-pred")
-            .data(pred_data)
-            .text(d => `${(d[0] < 10 ? " " : "")}${d[0]}% - ${classes[d[1]]}`)
-            .attr("fill", (d, i) => i == 0 ? (d[1] == correct_index ? "green" : "red") : null)
-            .classed("net-pred", true)
-            .style("visibility", "visible")
+        
+        update_probability_display(pred_data, correct_index)
     })
 }
 
-export function init_real_cnn() {
+function update_probability_display(pred_data, correct_index) {
+    current_pred_data = pred_data
+    d3.select("#real-cnn-vis").selectAll(".net-pred")
+        .data(pred_data)
+        .text(d => `${(d[0] < 10 ? " " : "")}${d[0]}% - ${classes[d[1]]}`)
+        .attr("fill", (d, i) => i == 0 ? (d[1] == correct_index ? "green" : "red") : null)
+        .style("visibility", "visible")
+}
+
+function update_real_cnn() {
     let indices = [...Array(num_classes * imgs_per_class).keys()]
 
     let w = config.svgWidth
@@ -73,6 +80,8 @@ export function init_real_cnn() {
     let border_size = img_space - img_size
     
     let h = 2 * img_block_height + 3 * offset
+
+    d3.select("#realCnnSection > *").remove()
 
     d3.select("#realCnnSection")
         .append("svg")
@@ -110,8 +119,6 @@ export function init_real_cnn() {
         })
 
     let svg = d3.select("#real-cnn-vis")
-
-    selected_img_idx = Math.floor(Math.random() * (num_classes * imgs_per_class))
 
     svg.selectAll("rect")
         .data([selected_img_idx])
@@ -172,12 +179,10 @@ export function init_real_cnn() {
     //     .attr("font-size", config.fontSize)
     //     .text("Predict");
 
-    let pred_data = [...Array(num_classes)].map((_, i) => [0, i])
     svg.selectAll(".net-pred")
-        .data(pred_data)
+        .data(current_pred_data)
         .enter()
         .append("text")
-        .text(d => `${(d[0] < 10 ? " " : "")}${d[0]}% - ${classes[d[1]]}`)
         .attr("x", w / 2 + img_space + config.spaceBetween / 4 + config.spaceBetween / 4 + img_space)
         .attr("y", (_, i) => (i + 1/2) * img_space)
         .attr("font-family", "sans-serif")
@@ -187,6 +192,15 @@ export function init_real_cnn() {
         .attr("dominant-baseline", "hanging")
         .classed("net-pred", true)
         .style("visibility", "hidden")
+    
+    update_probability_display(current_pred_data, selected_img_idx)
+}
 
-        load_model()
+export function init_real_cnn() {
+    update_real_cnn()
+    load_model()
+}
+
+export function resize_real_cnn() {
+    update_real_cnn()
 }
