@@ -95,9 +95,8 @@
         How are we representing an image?
       </p>
       <p class="textContent">
-        Your eyes register colors as a combination of red, green and blue light. All the colors that we can see
-        are just a combination of different amounts of red, green and blue light. Computers also display colors
-        with these three colors. Every pixel on the screen you are using right now can be represented by just
+        Your eyes register colors as a combination of red, green and blue light. Computers also display colors
+        using red, green and blue. Every pixel on the screen you are seeing right now can be represented by just
         three values. For example the color of this fuchsia <span style="color:fuchsia">██</span> has red's
         brightness set to 255, green's brightness set to 0 and blue's brightness set to 255. We would say that
         the RGB values for this color is (255, 0, 255). To display the fuchsia, your computer would then use an 
@@ -143,7 +142,7 @@
         Layering convolutions
       </p>
       <p class="textContent">
-        Using convolutions, we can construct a "network" of convolutions that feed into each other;
+        We can also construct a "network" of convolutions that feed into each other;
         i.e. convolving an image that's already been convolved once.
         Some of these convolutions give great analysis of the images as-is, why not string multiple together?
         We might be able to detect even more specific features with this method. Experiment with the
@@ -155,10 +154,10 @@
 
     <div class="textContentWrapper">
       <p class="textContentTitle">
-        Title
+        Putting it together
       </p>
       <p class="textContent">
-        Below is a simple neural network for classifying a picture as one of ten categories: Plane, Car, Bird, Car, Deer, Dog, Frog, Horse, Ship and Truck. Hover over the pixels
+        Below is a simple neural network for classifying a picture as one of ten categories: Plane, Car, Bird, Cat, Deer, Dog, Frog, Horse, Ship and Truck. Hover over the pixels
         in any layer to see the path of a pixel through the network. Both the relevant pixel and the kernel are highlighted in alternating colors at each layer.
       </p>
       <p class="textContent">
@@ -176,23 +175,19 @@
 
     <div class="textContentWrapper">
       <p class="textContentTitle">
-        Title
+        Final destination
       </p>
       <p class="textContent">
-        In reality, we don't tune the networks manually like this. Most commonly an algorithm called Backpropagation is used. It uses the network to predict an image
-        and then based on how wrong the prediction is, the weights of the network are adjusted so that the network predicts the image correctly. Through this process, the
-        network is able to automatically learn complex kernels that extract useful information from images.
+        In reality, we don't tune the networks manually like this. Usually, the computer will adjust these values automatically, using a process called "<a href="https://en.wikipedia.org/wiki/Backpropagation" target="_blank">Backpropogation</a>".
+        The process is similar to what you did above! The computer makes some predictions, then adjusts the values in the direction that seems to make better predictions.
+        Through this process, the network is able to automatically learn complex kernels that extract useful information from images.
       </p>
     </div>
 
     <div class="textContentWrapper">
-      <p class="textContentTitle">
-        Title
-      </p>
       <p class="textContent">
-        Through backpropagation, we trained a convolutional neural network to predict an images as one of the 10 classes.
-        This small convolutional neural network is run directly in your browser.
-        Below are 32 images from each of the 10 classes that the network has never seen before. Click on any image to select it and have the network predict what the image is.
+        Below you'll find a fully trained network, similar to <a href="https://towardsdatascience.com/vgg-neural-networks-the-next-step-after-alexnet-3f91fa9ffe2c" target="_blank">VGG</a>.
+        There are 32 images from each of the 10 classes that the network has never seen before. Click on any image to select it and have the network predict what the image is.
         Try to find some images that the network classifies correctly and some that it misclassifies!
       </p>
     </div>

@@ -151,7 +151,7 @@ export function recalculateConfig() {
     document.documentElement.style.setProperty('--thumbSize', `${cellWidth * 3 + 3 * 2 + 2 * 3}px`);
     document.documentElement.style.setProperty('--kernelThumbSize', `${cellWidth}px`);
     document.documentElement.style.setProperty('--kernelThumbFont', `${fontSize}px`);
-    document.documentElement.style.setProperty('--titleFontSize', `${kernelFontSize * 2.5}px`);
+    document.documentElement.style.setProperty('--titleFontSize', `${kernelFontSize * 4}px`);
     document.documentElement.style.setProperty('--textContentTitleFontSize', `${kernelFontSize * 1.5}px`);
     document.documentElement.style.setProperty('--textContentFontSize', `${kernelFontSize}px`);
 }
