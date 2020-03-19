@@ -1,12 +1,59 @@
 import * as d3 from "d3";
 import * as config from './config';
 
+/** The duration of the animation moving cells */
+const moveAnimationDuration = 1500;
+/** The duration of the animation changing text & coloring cells */
+const textAnimationDuration = 1500;
+
+/** Width of cells, height of cells, font size of cells */
+let cellWidth;
+let cellHeight;
+let fontSize;
+    
+let buttonWidth;
+let buttonHeight;
+let buttonGap;
+
+let leftMargin;
+let topMargin;
+
+// Width and height of the svg
+let svgWidth;
+let svgHeight;
+
 /**
  * Instantiate this section
  */
 export function initAnimateMathSection() {
+    recalculate();
     initSVG();
     drawFrame(false);
+}
+
+/**
+ * Flattens a 3D array into a 1D array.
+ * 
+ * @param {any[][][]} a 
+ */
+function flattenArray(a) {
+    return a.flat().flat();
+}
+/**
+ * Stolen from stackoverflow. Check if two arrays are equal(order matters).
+ * 
+ * @param {any[]} a 
+ * @param {any[]} b 
+ */
+function arraysEqual(a, b) {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (a.length != b.length) return false;
+
+  for (var i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 // Frame data
@@ -82,32 +129,15 @@ const frames = [
 /** The number of cells wide the gap between matricies is */
 const gapSize = 1;
 
-/** The duration of the animation moving cells */
-const moveAnimationDuration = 1500;
-/** The duration of the animation changing text & coloring cells */
-const textAnimationDuration = 1500;
-
-/** Width of cells, height of cells, font size of cells */
-let cellWidth = config.kernelCellWidth;
-let cellHeight = config.kernelCellHeight;
-let fontSize = config.fontSize * 1.5;
-    
-let buttonWidth = config.cellWidth * 5;
-let buttonHeight = config.cellHeight * 2;
-let buttonGap = cellHeight;
-
-let leftMargin = cellWidth;
-let topMargin = cellHeight;
-
 // Find the maximums of the frame data:
 //   Largest total number of cells
 //   Largest number of matricies
 //   Largest number of rows
 //   Largest number of columns(including gaps between matricies)
-let maxNumCells = 0;
 let maxNumMats = 0;
 let maxNumRows = 0;
 let maxNumCols = 0;
+let maxNumCells = 0;
 for (const frame of frames) {
     if (frame.matrices.length > maxNumMats) {
         maxNumMats = frame.matrices.length;
@@ -115,37 +145,12 @@ for (const frame of frames) {
     if (frame.matrices[0].length > maxNumRows) {
         maxNumRows = frame.matrices[0].length;
     }
-    if ((frame.matrices[0][0].length) * frame.matrices.length + gapSize * (frame.matrices.length - 1) > maxNumCols) {
-        maxNumCols = (frame.matrices[0][0].length) * frame.matrices.length + gapSize * (frame.matrices.length - 1);
+    if (frame.matrices[0][0].length * frame.matrices.length + gapSize * (frame.matrices.length - 1) > maxNumCols) {
+        maxNumCols = frame.matrices[0][0].length * frame.matrices.length + gapSize * (frame.matrices.length - 1);
     }
     if (frame.matrices.length * frame.matrices[0].length * frame.matrices[0][0].length > maxNumCells) {
         maxNumCells = frame.matrices.length * frame.matrices[0].length * frame.matrices[0][0].length;
     }
-}
-
-/**
- * Flattens a 3D array into a 1D array.
- * 
- * @param {any[][][]} a 
- */
-function flattenArray(a) {
-    return a.flat().flat();
-}
-/**
- * Stolen from stackoverflow. Check if two arrays are equal(order matters).
- * 
- * @param {any[]} a 
- * @param {any[]} b 
- */
-function arraysEqual(a, b) {
-  if (a === b) return true;
-  if (a == null || b == null) return false;
-  if (a.length != b.length) return false;
-
-  for (var i = 0; i < a.length; ++i) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
 }
 
 // Pad the cell data for each frame to each have the length of the largest frame.
@@ -155,10 +160,6 @@ for (const frame of frames) {
     const paddedCells = Array(maxNumCells - flat.length).fill('').concat(flat);
     frame.paddedCells = paddedCells;
 }
-
-// Width and height of the svg
-let svgWidth = leftMargin * 2 + maxNumCols * cellWidth;
-let svgHeight = topMargin * 2 + maxNumRows * cellHeight + buttonGap + buttonHeight;
 
 // The cell data that was rendered in the previous frame
 let prevCells = [];
@@ -464,11 +465,11 @@ function nextFrame() {
     drawFrame();
 }
 
-export function resizeAnimateMath() {
+function recalculate() {
     cellWidth = config.kernelCellWidth;
     cellHeight = config.kernelCellHeight;
     fontSize = config.fontSize * 1.5;
-    
+
     buttonWidth = config.cellWidth * 5;
     buttonHeight = config.cellHeight * 2;
     buttonGap = cellHeight;
@@ -478,7 +479,10 @@ export function resizeAnimateMath() {
 
     svgWidth = leftMargin * 2 + maxNumCols * cellWidth;
     svgHeight = topMargin * 2 + maxNumRows * cellHeight + buttonGap + buttonHeight;
+}
 
+export function resizeAnimateMath() {
+    recalculate();
     const root = d3.select("#animateMathSection")
         .select("#animateMathSvg")
         .attr("width", svgWidth)

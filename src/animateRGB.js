@@ -4,11 +4,6 @@ import redChannel from '../Images/dogR.png';
 import greenChannel from '../Images/dogG.png';
 import blueChannel from '../Images/dogB.png';
 
-export function initAnimateRGBSection() {
-    initSVG();
-    updateFrame(false)
-}
-
 // Initial state of image
 let unified = false;
 
@@ -16,19 +11,26 @@ let unified = false;
 const separateDuration = 2000;
 
 // Margin between images(also padding on side and top and separating the button)
-let margin = config.kernelCellWidth;
+let margin;
 
 // Image height and width
-let imgWidth = 5 * config.kernelCellWidth;
-let imgHeight = 5 * config.kernelCellHeight;
+let imgWidth;
+let imgHeight;
 
 // button height and width
-let buttonWidth = config.cellWidth * 5;
-let buttonHeight = config.cellHeight * 2;
+let buttonWidth;
+let buttonHeight;
 
 // SVG height and width
-let svgWidth = imgWidth * 3 + margin * 4;
-let svgHeight = imgHeight + margin * 3 + buttonHeight;
+let svgWidth;
+let svgHeight;
+
+export function initAnimateRGBSection() {
+    recalculate();
+    initSVG();
+    updateFrame(false)
+}
+
 
 /**
  * Initialize the SVG.
@@ -213,7 +215,7 @@ function enableButton() {
         .on("click", fragmentOrUnify);
 }
 
-export function resizeAnimateRGB() {
+function recalculate() {
     margin = config.kernelCellWidth;
 
     imgWidth = 5 * config.kernelCellWidth;
@@ -224,6 +226,10 @@ export function resizeAnimateRGB() {
 
     svgWidth = imgWidth * 3 + margin * 4;
     svgHeight = imgHeight + margin * 3 + buttonHeight;
+}
+
+export function resizeAnimateRGB() {
+    recalculate();
 
     const root = d3.select("#animateRGBSection")
         .select("#animateRGBSvg")
