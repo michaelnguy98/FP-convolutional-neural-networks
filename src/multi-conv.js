@@ -5,113 +5,117 @@ import puppy from "../Images/dog.png";
 import puppySobel from "../Images/puppySobel.png";
 import puppySobelConv from "../Images/puppySobelConv.png";
 import puppyOutput from "../Images/puppyOutput.png";
-
+    
 /**
  * State of the visualization. Number of layers
  */
-let numLayers = 0;
+let numLayers;
 
 /**
  * Proportions of the SVG
  */
-let svgWidth = config.svgWidth;
-let svgHeight = svgWidth / 4;
+let svgWidth;
+let svgHeight;
 
 /**
  * Proportions for image
  */
-let imageSectionWidth = svgWidth;
-let imageSectionHeight = svgHeight / 2;
+let imageSectionWidth;
+let imageSectionHeight;
 
-let imageSectionX = 0;
-let imageSectionY = 0;
+let imageSectionX;
+let imageSectionY;
 
-let groupWidth = 0.2 * imageSectionWidth;
-let groupHeight = 0.5 * imageSectionHeight;
+let groupWidth;
+let groupHeight;
 
 // Image
-let imageWidth = 0.4 * groupWidth;
-let imageHeight = imageWidth;
+let imageWidth;
+let imageHeight;
 
-let imageX = 0.6 * groupWidth;
-let imageY = 0.2 * groupHeight;
+let imageX;
+let imageY;
 
 // Image Text
-let imageTextX = imageX + imageWidth / 2;
-let imageTextY = imageY - 0.1 * imageHeight;
+let imageTextX;
+let imageTextY;
 
 // Arrow
-let arrowLength = 0.35 * groupWidth;
-let arrowX1 = 0.1 * groupWidth;
-let arrowX2 = arrowX1 + arrowLength;
-let arrowY = 0.7 * groupHeight;
+let arrowLength;
+let arrowX1;
+let arrowX2;
+let arrowY;
 
 // Arrowhead
-let arrowSize = 0.04 * groupHeight;
-let arrowPoints = [[0, 0], [0, arrowSize * 2], [arrowSize * 3, arrowSize]];
+let arrowSize;
+let arrowPoints;
 
-let arrowMarkerWidth = groupHeight / 5;
-let arrowMarkerHeight = groupHeight / 5;
+let arrowMarkerWidth;
+let arrowMarkerHeight;
 
 // Arrow Text
-let arrowTextX = arrowX1 + arrowLength / 2;
-let arrowTextY = arrowY - 0.1 * groupHeight;
+let arrowTextX;
+let arrowTextY;
 
 // Start Image
-let startImageX = 0.15 * imageSectionWidth;
-let startImageY = imageSectionY + (0.3 * imageSectionHeight) + imageY;
+let startImageX;
+let startImageY;
 
-let startImageTextX = startImageX + imageWidth / 2;
-let startImageTextY = startImageY - 0.1 * imageHeight;
+let startImageTextX;
+let startImageTextY;
 
 /**
  * Proportions of the description text
  */
-let textSectionWidth = svgWidth;
-let textSectionHeight = svgHeight / 3.5;
+let textSectionWidth;
+let textSectionHeight;
 
-let textSectionX = 0;
-let textSectionY = svgHeight / 2;
+let textSectionX;
+let textSectionY;
 
-let textX = textSectionX + textSectionWidth / 2;
-let textY = textSectionY + textSectionHeight / 2;
+let textX;
+let textY;
 
 /**
  * Proportions of the buttons
  */
-let buttonSectionWidth = svgWidth;
-let buttonSectionHeight = textSectionHeight;
+let buttonSectionWidth;
+let buttonSectionHeight;
 
-let buttonSectionX = 0;
-let buttonSectionY = (3 / 4) * svgHeight;
+let buttonSectionX;
+let buttonSectionY;
 
-let buttonWidth = buttonSectionWidth / 15;
-let buttonHeight = buttonSectionHeight / 2;
+let buttonWidth;
+let buttonHeight;
 
-let nextButtonX = buttonSectionX + buttonSectionWidth / 2;
-let nextButtonY = buttonSectionY + buttonSectionHeight / 4;
+let nextButtonX;
+let nextButtonY;
 
-let nextButtonTextX = nextButtonX + buttonWidth / 2;
-let nextButtonTextY = nextButtonY + buttonHeight / 2;
+let nextButtonTextX;
+let nextButtonTextY;
 
-let prevButtonX = nextButtonX - buttonWidth;
-let prevButtonY = nextButtonY;
+let prevButtonX;
+let prevButtonY;
 
-let prevButtonTextX = prevButtonX + buttonWidth / 2;
-let prevButtonTextY = prevButtonY + buttonHeight / 2;
+let prevButtonTextX;
+let prevButtonTextY;
 
 /**
  * Font Size
  */
-let fontSize = svgWidth / 40;
-let imageTextFontSize = fontSize / 3;
-let arrowFontSize = imageTextFontSize;
-let descriptionTextFontSize = fontSize / 2;
-let buttonTextFontSize = fontSize / 2;
+let fontSize;
+let imageTextFontSize;
+let arrowFontSize;
+let descriptionTextFontSize;
+let buttonTextFontSize;
 
-let arrowStrokeWidth = fontSize / 30;
+let arrowStrokeWidth;
 
 export function initMultiConvSection() {
+    numLayers = 0;
+
+    recalculate();
+
     initSVG();
     drawInputImage();
     drawConvLayers();
@@ -426,16 +430,10 @@ export function updateState(action) {
     drawConvLayers();
 }
 
-export function resizeMultiConv() {
-    /**
-     * Proportions of the SVG
-     */
+function recalculate() {
     svgWidth = config.svgWidth;
     svgHeight = svgWidth / 4;
 
-    /**
-     * Proportions for image
-     */
     imageSectionWidth = svgWidth;
     imageSectionHeight = svgHeight / 2;
 
@@ -445,44 +443,35 @@ export function resizeMultiConv() {
     groupWidth = 0.2 * imageSectionWidth;
     groupHeight = 0.5 * imageSectionHeight;
 
-    // Image
     imageWidth = 0.4 * groupWidth;
     imageHeight = imageWidth;
 
     imageX = 0.6 * groupWidth;
     imageY = 0.2 * groupHeight;
 
-    // Image Text
     imageTextX = imageX + imageWidth / 2;
     imageTextY = imageY - 0.1 * imageHeight;
 
-    // Arrow
     arrowLength = 0.35 * groupWidth;
     arrowX1 = 0.1 * groupWidth;
     arrowX2 = arrowX1 + arrowLength;
     arrowY = 0.7 * groupHeight;
 
-    // Arrowhead
     arrowSize = 0.04 * groupHeight;
     arrowPoints = [[0, 0], [0, arrowSize * 2], [arrowSize * 3, arrowSize]];
 
     arrowMarkerWidth = groupHeight / 5;
     arrowMarkerHeight = groupHeight / 5;
 
-    // Arrow Text
     arrowTextX = arrowX1 + arrowLength / 2;
     arrowTextY = arrowY - 0.1 * groupHeight;
 
-    // Start Image
     startImageX = 0.15 * imageSectionWidth;
     startImageY = imageSectionY + (0.3 * imageSectionHeight) + imageY;
 
     startImageTextX = startImageX + imageWidth / 2;
     startImageTextY = startImageY - 0.1 * imageHeight;
 
-    /**
-     * Proportions of the description text
-     */
     textSectionWidth = svgWidth;
     textSectionHeight = svgHeight / 3.5;
 
@@ -492,9 +481,6 @@ export function resizeMultiConv() {
     textX = textSectionX + textSectionWidth / 2;
     textY = textSectionY + textSectionHeight / 2;
 
-    /**
-     * Proportions of the buttons
-     */
     buttonSectionWidth = svgWidth;
     buttonSectionHeight = textSectionHeight;
 
@@ -516,9 +502,6 @@ export function resizeMultiConv() {
     prevButtonTextX = prevButtonX + buttonWidth / 2;
     prevButtonTextY = prevButtonY + buttonHeight / 2;
 
-    /**
-     * Font Size
-     */
     fontSize = svgWidth / 40;
     imageTextFontSize = fontSize / 3;
     arrowFontSize = imageTextFontSize;
@@ -526,8 +509,10 @@ export function resizeMultiConv() {
     buttonTextFontSize = fontSize / 2;
 
     arrowStrokeWidth = fontSize / 30;
+}
 
-    // console.log("SVG width is " + svgWidth);
+export function resizeMultiConv() {
+    recalculate();
 
     // SVG
     const root = d3.select("#multiConvSection")
