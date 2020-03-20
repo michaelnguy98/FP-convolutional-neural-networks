@@ -11,6 +11,32 @@ import puppyOutput from "../Images/puppyOutput.png";
  */
 let numLayers;
 
+const layerText = [
+    {
+        line1: "Here is the puppy image.",
+        line2: "Let's apply a convolution to it!"
+    },
+    {
+        line1: "Certain features of the puppy are being highlighted.",
+        line2: "Let's apply another convolution!"
+    },
+    {
+        line1: "The eyes seem to have a lot more prominence with a",
+        line2: "little bit of noise around the feet. Let's apply another convolution!"
+    },
+    {
+        line1: "The region most prominent corresponds to the eyes of the puppy.",
+        line2: "Our network seems to be searching for these kinds of features..."
+    }
+];
+
+const animationDuration = 500;
+
+const actions = {
+    ADD: 'ADD',
+    REMOVE: 'REMOVE'
+}
+
 /**
  * Proportions of the SVG
  */
@@ -117,16 +143,12 @@ export function initMultiConvSection() {
     recalculate();
 
     initSVG();
-    drawInputImage();
-    drawConvLayers();
-    drawButtons();
-    drawText();
 }
 
 /**
  * Initialize the SVG.
  */
-export function initSVG() {
+function initSVG() {
     d3.select("#multiConvSection")
         .append("svg")
         .attr("id", "multiConvSvg")
@@ -144,29 +166,53 @@ export function initSVG() {
         .append("path")
         .attr("d", d3.line()(arrowPoints))
         .style("stroke", "black");
+    
+    initInputImage();
+    initConvLayers();
+    initText();
+    initButtons();
+}
+
+/**
+ * Draws the image and text
+ */
+function initInputImage() {
+    const leftPadding = (svgWidth - imageWidth - (groupWidth * numLayers)) / 2;
+
+    const imageWrapper = d3.select("#multiConvSvg")
+        .append("g")
+        .attr("id", "imageWrapper")
+        .attr("transform", `translate(${leftPadding}, ${startImageY})`);
+    imageWrapper.append("svg:image")
+        .attr("id", "image0")
+        .attr("width", imageWidth)
+        .attr("height", imageHeight)
+        .attr('xlink:href', puppy)
+        .attr("stroke", "black");
+    imageWrapper.append("text")
+        .attr("x", startImageTextX - startImageX)
+        .attr("y", startImageTextY - startImageY)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("font-family", "sans-serif")
+        .attr("font-size", imageTextFontSize)
+        .attr("pointer-events", "none")
+        .text("Input");
 }
 
 /**
  * Draws the ConvLayers
  */
-export function drawConvLayers() {
-    // Make Layers
-
-    const data = [];
-
-    for (let i = 0; i < 3; i++) {
-        data.push(`Layer ${i + 1}`);
-    }
-    
+function initConvLayers() {
     const convLayerWrappers = d3.select("#multiConvSvg")
         .selectAll(".convLayerWrapper")
-        .data(data)
+        .data(Array(3))
         .enter()
         .append("g")
         .attr("transform", (_, i) => `translate(${imageWidth + startImageX + (groupWidth * i)}, ${imageSectionY + (0.3 * imageSectionHeight)})`)
         .attr("opacity", 0.0)
         .classed("convLayerWrapper", true);
-    
+
     //line              
     convLayerWrappers.append("line")
         .attr("x1", arrowX1)
@@ -222,20 +268,9 @@ export function drawConvLayers() {
         .attr("pointer-events", "none")
         .text((_, i) => `Layer ${i+1}`)
         .classed("imageCaption", true);
-
-    d3.select("#multiConvSvg")
-        .selectAll(".convLayerText")
-        .data(data)
-        .text((d) => d);
-
-    d3.select("#multiConvSvg")
-        .selectAll(".convLayerWrapper")
-        .data(data)
-        .exit()
-        .remove();
 }
 
-export function drawButtons() {
+function initButtons() {
     // This is the Add Layer Button
     const addButtonWrapper = d3.select("#multiConvSvg")
         .append("g")
@@ -283,37 +318,9 @@ export function drawButtons() {
 }
 
 /**
- * Draws the image and text
- */
-export function drawInputImage() {
-    
-    const imageWrapper = d3.select("#multiConvSvg")
-        .append("g")
-        .attr("id", "imageWrapper");
-    imageWrapper.append("svg:image")
-        .attr("id", "image0")
-        .attr("x", startImageX)
-        .attr("y", startImageY)
-        .attr("width", imageWidth)
-        .attr("height", imageHeight)
-        .attr('xlink:href', puppy)
-        .attr("stroke", "black");
-    imageWrapper.append("text")
-        .attr("x", startImageTextX)
-        .attr("y", startImageTextY)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "central")
-        .attr("font-family", "sans-serif")
-        .attr("font-size", imageTextFontSize)
-        .attr("pointer-events", "none")
-        .text("Input");
-}
-
-/**
  * Draws the desciption text
  */
-export function drawText() {
-    
+function initText() {
     const textWrapper = d3.select("#multiConvSvg")
         .append("g")
         .attr("id", "textWrapper");
@@ -326,7 +333,7 @@ export function drawText() {
         .attr("font-size", descriptionTextFontSize)
         .attr("pointer-events", "none")
         .attr("dy", "0em")
-        .text("Here is the puppy image.")
+        .text(layerText[numLayers].line1)
         .classed("descriptionText", true);
     textWrapper.append("text")
         .attr("x", textX)
@@ -337,20 +344,17 @@ export function drawText() {
         .attr("font-size", descriptionTextFontSize)
         .attr("pointer-events", "none")
         .attr("dy", "1em")
-        .text("Lets apply a convolution to it!")
+        .text(layerText[numLayers].line2)
         .classed("descriptionText2", true);
-}
-
-const actions = {
-    ADD: 'ADD',
-    REMOVE: 'REMOVE'
 }
 
 /**
  * Updates the states of the layers
  */
-export function updateState(action) {
-    const convLayerWrappers = d3.select("#multiConvSvg");
+function updateState(action) {
+    const t = d3.transition().duration(animationDuration).ease(d3.easeCubic);
+
+    const root = d3.select("#multiConvSvg");
 
     switch (action) {
         case 'ADD':
@@ -358,76 +362,52 @@ export function updateState(action) {
                 numLayers++;
             }
             if (numLayers > 0) {
-                d3.select("#removeButtonWrapper")
+                root.select("#removeButtonWrapper")
                     .attr("visibility", "visible")
             }
             if (numLayers >= 3) {
-                d3.select("#addButtonWrapper")
+                root.select("#addButtonWrapper")
                     .attr("visibility", "hidden");
             }
-
-            convLayerWrappers.selectAll(".convLayerWrapper")
-                .transition()
-                .style("opacity", (_,i) => {
-                    if (i < numLayers) {
-                        return 1.0;
-                    } else {
-                        return 0.0;
-                    };
-                })
-                .duration(500);
-
             break;
         case 'REMOVE':
             if (numLayers > 0) {
                 numLayers--;
             }
             if (numLayers < 3) {
-                d3.select("#addButtonWrapper")
+                root.select("#addButtonWrapper")
                     .attr("visibility", "visible")
             }
             if (numLayers <= 0) {
-                d3.select("#removeButtonWrapper")
+                root.select("#removeButtonWrapper")
                     .attr("visibility", "hidden");
             }
-            
-            convLayerWrappers.selectAll(".convLayerWrapper")
-                .transition()
-                .style("opacity", (_,i) => {
-                    if (i >= numLayers) {
-                        return 0.0;
-                    } else {
-                        return 1.0;
-                    };
-                })
-                .duration(500);
             break;
-        default:
     }
 
-    let txt;
-    let txt2;
-    if (numLayers == 1) {
-        txt = "Certain features of the puppy are being highlighted.";
-        txt2 = "Let's apply another convolution!";
-    } else if (numLayers == 2) {
-        txt = "The eyes seem to have a lot more prominence with a";
-        txt2 = "little bit of noise around the feet. Let's apply another convolution!";
-    } else if (numLayers == 3) {
-        txt = "The region most prominent corresponds to the eyes of the puppy.";
-        txt2 = "Our network seems to be searching for these kinds of features...";
-    } else {
-        txt = "Here is the puppy image.";
-        txt2 = "Let's apply a convolution to it!";
-    }
+    const leftPadding = (svgWidth - imageWidth - (groupWidth * numLayers)) / 2;
+
+    root.select("#imageWrapper")
+        .transition(t)
+        .attr("transform", `translate(${leftPadding}, ${startImageY})`);
+    root.selectAll(".convLayerWrapper")
+        .transition(t)
+        .attr("transform", (_, i) => `translate(${leftPadding + imageWidth + (groupWidth * i)}, ${imageSectionY + (0.3 * imageSectionHeight)})`)
+        .style("opacity", (_,i) => {
+            if (i >= numLayers) {
+                return 0.0;
+            } else {
+                return 1.0;
+            };
+        });
+
+    const text = layerText[numLayers];
     d3.select("#textWrapper")
         .select(".descriptionText")
-        .text(txt);
+        .text(text.line1);
     d3.select("#textWrapper")
         .select(".descriptionText2")
-        .text(txt2);
-
-    drawConvLayers();
+        .text(text.line2);
 }
 
 function recalculate() {
