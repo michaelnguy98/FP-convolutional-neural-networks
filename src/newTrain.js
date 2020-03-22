@@ -112,7 +112,12 @@ export function initSVG() {
         .attr("transform", `translate(${inputLeftMargin},
                                       ${inputUpperMargin})`);
     for (let i = 0; i < data.input.length; ++i) {
-        //const filteredData = filter2d(data.input[i], renderCutoffs.input);
+        let vals;
+        if (i < data.input.length - 1) {
+            vals = filter2d(data.input[i], renderCutoffs.input);
+        } else {
+            vals = data.input[i].flat();
+        }
 
         const inputWrapper = inputLayers.append("g")
             .attr("id", `inputLayerWrapper-${i}`)
@@ -120,14 +125,25 @@ export function initSVG() {
                                           ${0})
                                 skewY(${skewAngle * -1})`);
         inputWrapper.selectAll(".cellColor")
-            .data(data.input[i].flat())//filteredData)
+            .data(vals)
             .enter()
             .append("rect")
             .attr("width", inputCellWidth)
             .attr("height", inputCellHeight)
-            .attr("x", (_, j) => (j % data.input[i][0].length) * inputCellWidth)
-            .attr("y", (_, j) => Math.floor(j / data.input[i][0].length) * inputCellHeight)
-            .attr("fill", d => d3.rgb(d, d, d))
+            .attr("x", (_, j) => {
+                if (i < data.input.length - 1) {
+                    return getFilteredCol(data.input[i][0].length, renderCutoffs.input, j) * inputCellWidth;
+                } else {
+                    return (j % data.input[i][0].length) * inputCellWidth;
+                }
+            })
+            .attr("y", (_, j) => {
+                if (i < data.input.length - 1) {
+                    return getFilteredRow(data.input[i][0].length, renderCutoffs.input, j) * inputCellHeight;
+                } else {
+                    return Math.floor(j / data.input[i][0].length) * inputCellHeight;
+                }
+            })
             .attr("stroke", config.borderColor)
             .attr("stroke-width", config.borderWidth)
             .classed("cellColor", true);
@@ -151,20 +167,38 @@ export function initSVG() {
         .attr("transform", `translate(${conv1LeftMargin},
                                       ${conv1UpperMargin})`);
     for (let i = 0; i < data.conv1.length; ++i) {
+        let vals;
+        if (i < data.conv1.length - 1) {
+            vals = filter2d(data.conv1[i], renderCutoffs.conv1);
+        } else {
+            vals = data.conv1[i].flat();
+        }
+
         const conv1Wrapper = conv1Layers.append("g")
             .attr("id", `conv1LayerWrapper-${i}`)
             .attr("transform", `translate(${layerOffset * i},
                                           ${0})
                                 skewY(${skewAngle * -1})`);
         conv1Wrapper.selectAll(".cellColor")
-            .data(data.conv1[i].flat())
+            .data(vals)
             .enter()
             .append("rect")
             .attr("width", conv1CellWidth)
             .attr("height", conv1CellHeight)
-            .attr("x", (_, j) => (j % data.conv1[i][0].length) * conv1CellWidth)
-            .attr("y", (_, j) => Math.floor(j / data.conv1[i][0].length) * conv1CellHeight)
-            .attr("fill", "pink")
+            .attr("x", (_, j) => {
+                if (i < data.conv1.length - 1) {
+                    return getFilteredCol(data.conv1[i][0].length, renderCutoffs.conv1, j) * conv1CellWidth;
+                } else {
+                    return (j % data.conv1[i][0].length) * conv1CellWidth;
+                }
+            })
+            .attr("y", (_, j) => {
+                if (i < data.conv1.length - 1) {
+                    return getFilteredRow(data.conv1[i][0].length, renderCutoffs.conv1, j) * conv1CellHeight;
+                } else {
+                    return Math.floor(j / data.conv1[i][0].length) * conv1CellHeight;
+                }
+            })
             .attr("stroke", config.borderColor)
             .attr("stroke-width", config.borderWidth)
             .classed("cellColor", true);
@@ -188,20 +222,38 @@ export function initSVG() {
         .attr("transform", `translate(${conv2LeftMargin},
                                       ${conv2UpperMargin})`);
     for (let i = 0; i < data.conv2.length; ++i) {
+        let vals;
+        if (i < data.conv2.length - 1) {
+            vals = filter2d(data.conv2[i], renderCutoffs.conv2);
+        } else {
+            vals = data.conv2[i].flat();
+        }
+
         const conv2Wrapper = conv2Layers.append("g")
             .attr("id", `conv2LayerWrapper-${i}`)
             .attr("transform", `translate(${layerOffset * i},
                                           ${0})
                                 skewY(${skewAngle * -1})`);
         conv2Wrapper.selectAll(".cellColor")
-            .data(data.conv2[i].flat())
+            .data(vals)
             .enter()
             .append("rect")
             .attr("width", conv2CellWidth)
             .attr("height", conv2CellHeight)
-            .attr("x", (_, j) => (j % data.conv2[i][0].length) * conv2CellWidth)
-            .attr("y", (_, j) => Math.floor(j / data.conv2[i][0].length) * conv2CellHeight)
-            .attr("fill", "pink")
+            .attr("x", (_, j) => {
+                if (i < data.conv2.length - 1) {
+                    return getFilteredCol(data.conv2[i][0].length, renderCutoffs.conv2, j) * conv2CellWidth;
+                } else {
+                    return (j % data.conv2[i][0].length) * conv2CellWidth;
+                }
+            })
+            .attr("y", (_, j) => {
+                if (i < data.conv2.length - 1) {
+                    return getFilteredRow(data.conv2[i][0].length, renderCutoffs.conv2, j) * conv2CellHeight;
+                } else {
+                    return Math.floor(j / data.conv2[i][0].length) * conv2CellHeight;
+                }
+            })
             .attr("stroke", config.borderColor)
             .attr("stroke-width", config.borderWidth)
             .classed("cellColor", true);
@@ -231,7 +283,6 @@ export function initSVG() {
         .attr("height", outputCellHeight)
         .attr("x", 0)
         .attr("y", (_, j) => j * outputCellHeight)
-        .attr("fill", "pink")
         .attr("stroke", config.borderColor)
         .attr("stroke-width", config.borderWidth)
         .classed("cellColor", true);
@@ -246,15 +297,59 @@ export function initSVG() {
 }
 
 function drawFrame() {
+    const root = d3.select("#newTrainSvg");
 
+    const inputLayers = root.select("#inputLayers");
+    for (let i = 0; i < data.input.length; ++i) {
+        let vals;
+        if (i < data.input.length - 1) {
+            vals = filter2d(data.input[i], renderCutoffs.input);
+        } else {
+            vals = data.input[i].flat();
+        }
+
+        const inputWrapper = inputLayers.select(`#inputLayerWrapper-${i}`);
+        inputWrapper.selectAll(".cellColor")
+            .data(vals)
+            .attr("fill", d => d3.rgb(d, d, d));
+    }
+
+    const conv1Layers = root.select("#conv1Layers");
+    for (let i = 0; i < data.conv1.length; ++i) {
+        let vals;
+        if (i < data.conv1.length - 1) {
+            vals = filter2d(data.conv1[i], renderCutoffs.conv1);
+        } else {
+            vals = data.conv1[i].flat();
+        }
+
+        const conv1Wrapper = conv1Layers.select(`#conv1LayerWrapper-${i}`);
+        conv1Wrapper.selectAll(".cellColor")
+            .data(vals)
+            .attr("fill", d => d3.rgb(d, d, d));
+    }
+
+    const conv2Layers = root.select("#conv2Layers");
+    for (let i = 0; i < data.conv2.length; ++i) {
+        let vals;
+        if (i < data.conv2.length - 1) {
+            vals = filter2d(data.conv2[i], renderCutoffs.conv2);
+        } else {
+            vals = data.conv2[i].flat();
+        }
+        const conv2Wrapper = conv2Layers.select(`#conv2LayerWrapper-${i}`);
+        conv2Wrapper.selectAll(".cellColor")
+            .data(vals)
+            .attr("fill", d => d3.rgb(d, d, d));
+    }
+
+    const outputWrapper = root.select("#outputWrapper");
+    outputWrapper.selectAll(".cellColor")
+        .attr("fill", d => d3.rgb(d, d, d));
 }
 
 function recalculate() {
     svgWidth = config.svgWidth;
-    //svgWidth = 765;
-    //inputLayerHeight = 200;
-    //layerOffset = 20;
-    //gapSize = 50;
 
     inputLayerHeight = svgWidth * 0.261438;
     conv1LayerHeight = inputLayerHeight * 0.75;
@@ -263,12 +358,6 @@ function recalculate() {
 
     layerOffset = inputLayerHeight * 0.1;
     gapSize = inputLayerHeight * 0.25;
-
-    //const inputLayerWidth = Math.cos(skewAngleRad) * inputLayerHeight + (layerOffset * (data.input.length - 1));
-    //const conv1LayerWidth = Math.cos(skewAngleRad) * conv1LayerHeight + (layerOffset * (data.conv1.length - 1));
-    //const conv2LayerWidth = Math.cos(skewAngleRad) * conv2LayerHeight + (layerOffset * (data.conv2.length - 1));
-    //const outputLayerWidth = outputLayerHeight / data.output.length;
-    //const total = inputLayerWidth + conv1LayerWidth + conv2LayerWidth + outputLayerWidth + gapSize * 3 + config.borderWidth * 4;
 
     svgHeight = inputLayerHeight + Math.sin(skewAngleRad) * inputLayerHeight + config.borderWidth * 4;
 }
@@ -297,8 +386,20 @@ export function resizeUserTrain() {
         inputWrapper.selectAll(".cellColor")
             .attr("width", inputCellWidth)
             .attr("height", inputCellHeight)
-            .attr("x", (_, j) => (j % data.input[i][0].length) * inputCellWidth)
-            .attr("y", (_, j) => Math.floor(j / data.input[i][0].length) * inputCellHeight);
+            .attr("x", (_, j) => {
+                if (i < data.input.length - 1) {
+                    return getFilteredCol(data.input[i][0].length, renderCutoffs.input, j) * inputCellWidth;
+                } else {
+                    return (j % data.input[i][0].length) * inputCellWidth;
+                }
+            })
+            .attr("y", (_, j) => {
+                if (i < data.input.length - 1) {
+                    return getFilteredRow(data.input[i][0].length, renderCutoffs.input, j) * inputCellHeight;
+                } else {
+                    return Math.floor(j / data.input[i][0].length) * inputCellHeight;
+                }
+            })
         inputWrapper.select(`#inputOutline-${i}`)
             .attr("width", inputCellWidth * data.input[i][0].length)
             .attr("height", inputCellHeight * data.input[i].length);
@@ -320,8 +421,20 @@ export function resizeUserTrain() {
         conv1Wrapper.selectAll(".cellColor")
             .attr("width", conv1CellWidth)
             .attr("height", conv1CellHeight)
-            .attr("x", (_, j) => (j % data.conv1[i][0].length) * conv1CellWidth)
-            .attr("y", (_, j) => Math.floor(j / data.conv1[i][0].length) * conv1CellHeight);
+            .attr("x", (_, j) => {
+                if (i < data.conv1.length - 1) {
+                    return getFilteredCol(data.conv1[i][0].length, renderCutoffs.conv1, j) * conv1CellWidth;
+                } else {
+                    return (j % data.conv1[i][0].length) * conv1CellWidth;
+                }
+            })
+            .attr("y", (_, j) => {
+                if (i < data.conv1.length - 1) {
+                    return getFilteredRow(data.conv1[i][0].length, renderCutoffs.conv1, j) * conv1CellHeight;
+                } else {
+                    return Math.floor(j / data.conv1[i][0].length) * conv1CellHeight;
+                }
+            })
         conv1Wrapper.select(`#conv1Outline-${i}`)
             .attr("width", conv1CellWidth * data.conv1[i][0].length)
             .attr("height", conv1CellHeight * data.conv1[i].length);
@@ -343,8 +456,20 @@ export function resizeUserTrain() {
         conv2Wrapper.selectAll(".cellColor")
             .attr("width", conv2CellWidth)
             .attr("height", conv2CellHeight)
-            .attr("x", (_, j) => (j % data.conv2[i][0].length) * conv2CellWidth)
-            .attr("y", (_, j) => Math.floor(j / data.conv2[i][0].length) * conv2CellHeight);
+            .attr("x", (_, j) => {
+                if (i < data.conv2.length - 1) {
+                    return getFilteredCol(data.conv2[i][0].length, renderCutoffs.conv2, j) * conv2CellWidth;
+                } else {
+                    return (j % data.conv2[i][0].length) * conv2CellWidth;
+                }
+            })
+            .attr("y", (_, j) => {
+                if (i < data.conv2.length - 1) {
+                    return getFilteredRow(data.conv2[i][0].length, renderCutoffs.conv2, j) * conv2CellHeight;
+                } else {
+                    return Math.floor(j / data.conv2[i][0].length) * conv2CellHeight;
+                }
+            })
         conv2Wrapper.select(`#conv2Outline-${i}`)
             .attr("width", conv2CellWidth * data.conv2[i][0].length)
             .attr("height", conv2CellHeight * data.conv2[i].length);
