@@ -7,6 +7,7 @@ import {initAnimateRGBSection, resizeAnimateRGB} from './animateRGB';
 import {recalculateConfig} from './config';
 import {resizeIntroConv} from './convIntro/initSVG';
 import * as config from "./config";
+import {initUserTrainSection, resizeUserTrain} from './newTrain';
 
 function loadSections() {
     recalculateConfig();
@@ -15,6 +16,7 @@ function loadSections() {
     initAnimateMathSection();
     initMultiConvSection();
     initConvIntroSection();
+    initUserTrainSection();
     init_cnn_vis();
     init_real_cnn();
 }
@@ -25,8 +27,8 @@ function onResize() {
     resizeAnimateRGB();
     resizeAnimateMath();
     resizeIntroConv();
-
-    resizeMultiConv()
+    resizeMultiConv();
+    resizeUserTrain();
 
     resize_cnn_vis()
     resize_real_cnn()
