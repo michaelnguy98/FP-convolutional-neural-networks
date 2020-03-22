@@ -508,9 +508,14 @@ export function resizeMultiConv() {
         .attr("orient", "auto")
         .attr("d", d3.line()(arrowPoints))
     
+    const leftPadding = (svgWidth - imageWidth - (groupWidth * numLayers)) / 2;
+
+    root.select("#imageWrapper")
+        .attr("transform", `translate(${leftPadding}, ${startImageY})`);
+    
     // Visualization section
     const convLayerWrappers = root.selectAll(".convLayerWrapper")
-        .attr("transform", (_, i) => `translate(${imageWidth + startImageX + (groupWidth * i)}, ${imageSectionY + (0.3 * imageSectionHeight)})`);
+        .attr("transform", (_, i) => `translate(${leftPadding + imageWidth + (groupWidth * i)}, ${imageSectionY + (0.3 * imageSectionHeight)})`)
               
     convLayerWrappers.selectAll("line")
         .attr("x1", arrowX1)
@@ -565,13 +570,11 @@ export function resizeMultiConv() {
     // Input Image
     const imageWrapper = root.select("#imageWrapper");
     imageWrapper.select("#image0")
-        .attr("x", startImageX)
-        .attr("y", startImageY)
         .attr("width", imageWidth)
         .attr("height", imageHeight);
     imageWrapper.select("text")
-        .attr("x", startImageTextX)
-        .attr("y", startImageTextY)
+        .attr("x", startImageTextX - startImageX)
+        .attr("y", startImageTextY - startImageY)
         .attr("font-size", imageTextFontSize);
 
 
