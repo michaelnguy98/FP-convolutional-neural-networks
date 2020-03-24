@@ -3,8 +3,6 @@ import * as tf from '@tensorflow/tfjs';
 
 import * as config from "./config";
 
-let curIndex = 0;
-
 export function initUserTrainSection() {
     loadModel().then((loadedModel) => {
         loadImage().then((imageData) => {
@@ -12,32 +10,11 @@ export function initUserTrainSection() {
             inputImg = imageData;
             prediction = model.predict(inputImg);
 
-            createImage(prediction[4], 22, `output1`);
-            createImage(prediction[4], 26, `output2`);
-            createImage(prediction[4], 42, `output3`);
-            createImage(prediction[5], 15, `output4`);
-            createImage(prediction[5], 24, `output5`);
-            createImage(prediction[5], 87, `output6`);
-            createImage(prediction[6], 28, `output7`);
-            createImage(prediction[6], 124, `output8`);
-
-            recalculate();
             initSVG();
+            resizeUserTrain();
             drawFrame();
         });
     });
-}
-
-function nextImages() {
-    const numOutputs = 8;
-
-    for (let i = 0; i < numOutputs; ++i) {
-        createImage(prediction[3], curIndex + i, `output${i + 1}`);
-    }
-
-    curIndex += numOutputs;
-
-    console.log(`Displaying [${curIndex - numOutputs}, ${curIndex - 1}]`);
 }
 
 const MODEL_URL = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/mjh/src/trainedVGG/model.json";
@@ -65,43 +42,6 @@ async function loadModel() {
     return allOutputsModel;
 }
 
-document.getElementById("nextImages").onclick = nextImages;
-function createImage(t, filterIndex, imageId) {
-    const data = t.squeeze(0).mul(255).arraySync();
-
-    const width = data[0].length;
-    const height = data.length;
-    const buffer = new Uint8ClampedArray(width * height * 4); // have enough bytes
-
-    for(let y = 0; y < height; y++) {
-        for(let x = 0; x < width; x++) {
-            let pos = (y * width + x) * 4; // position in buffer based on x and y
-            buffer[pos  ] = data[y][x][filterIndex];           // some R value [0, 255]
-            buffer[pos+1] = data[y][x][filterIndex];           // some G value
-            buffer[pos+2] = data[y][x][filterIndex];           // some B value
-            buffer[pos+3] = 255;           // set alpha channel
-        }
-    }
-
-    // create off-screen canvas element
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    canvas.width = width;
-    canvas.height = height;
-
-    // create imageData object
-    let idata = ctx.createImageData(width, height);
-
-    // set our buffer as source
-    idata.data.set(buffer);
-
-    // update canvas with new data
-    ctx.putImageData(idata, 0, 0);
-
-    document.getElementById(imageId).src = canvas.toDataURL();
-}
-
 let svgWidth;
 let svgHeight;
 
@@ -113,6 +53,9 @@ let outputLayerHeight;
 let layerOffset;
 let gapSize;
 
+let strokeSize = 0;
+let outlineSize;
+
 /**
  * Return all of the entries with one index smaller than the given indexCutoff.
  * Filtering arr=[[1,2,3]  with indexCutoff=1 will return [1,2,3,4,7].
@@ -122,19 +65,28 @@ let gapSize;
  * @param {any[][]} arr 
  * @param {Int} indexCutoff 
  */
-function filter2d(arr, indexCutoff) {
+function filter2d(arr, channelIndex, indexCutoff) {
     const output = Array(arr.length * arr[0].length - (arr.length - indexCutoff) * (arr[0].length - indexCutoff));
     let k = 0;
     for (let i = 0; i < indexCutoff; ++i) {
         for (let j = 0; j < arr[i].length; ++j) {
-            output[k] = arr[i][j];
+            output[k] = arr[i][j][channelIndex];
             ++k;
         }
     }
     for (let i = indexCutoff; i < arr.length; ++i) {
         for (let j = 0; j < indexCutoff; ++j) {
-            output[k] = arr[i][j];
+            output[k] = arr[i][j][channelIndex];
             ++k;
+        }
+    }
+    return output;
+}
+function flatImage(arr, channelIndex) {
+    const output = Array(arr.length * arr[0].length);
+    for (let i = 0; i < arr.length; ++i) {
+        for (let j = 0; j < arr[i].length; ++j) {
+            output[i * arr[i].length + j] = arr[i][j][channelIndex];
         }
     }
     return output;
@@ -155,29 +107,70 @@ function getFilteredRow(width, indexCutoff, index) {
     }
 }
 
-let data = {
+let innerLayerDisplay = {
     input: [
-        Array(32).fill().map((a, i) => Array(32).fill().map((b, j) => (i + j) * 8)),
-        Array(32).fill().map((a, i) => Array(32).fill().map((b, j) => (i + j) * 6)),
-        Array(32).fill().map((a, i) => Array(32).fill().map((b, j) => (i + j) * 4)),
+        {
+            filterIndex: 0
+        },
+        {
+            filterIndex: 1
+        },
+        {
+            filterIndex: 2
+        },
     ],
     conv1: [
-        Array(16).fill().map(() => Array(16).fill(0)),
-        Array(16).fill().map(() => Array(16).fill(0)),
-        Array(16).fill().map(() => Array(16).fill(0)),
-        Array(16).fill().map(() => Array(16).fill(0)),
+        {
+            layerIndex: 3,
+            filterIndex: 124,
+        },
+        {
+            layerIndex: 3,
+            filterIndex: 121,
+        },
+        {
+            layerIndex: 2,
+            filterIndex: 2,
+        },
+        {
+            layerIndex: 2,
+            filterIndex: 15,
+        },
     ],
     conv2: [
-        Array(8).fill().map(() => Array(8).fill(0)),
-        Array(8).fill().map(() => Array(8).fill(0)),
-        Array(8).fill().map(() => Array(8).fill(0)),
-        Array(8).fill().map(() => Array(8).fill(0)),
-        Array(8).fill().map(() => Array(8).fill(0)),
-        Array(8).fill().map(() => Array(8).fill(0)),
-        Array(8).fill().map(() => Array(8).fill(0)),
-        Array(8).fill().map(() => Array(8).fill(0)),
+        {
+            layerIndex: 4,
+            filterIndex: 22,
+        },
+        {
+            layerIndex: 4,
+            filterIndex: 26,
+        },
+        {
+            layerIndex: 4,
+            filterIndex: 42,
+        },
+        {
+            layerIndex: 5,
+            filterIndex: 15,
+        },
+        {
+            layerIndex: 5,
+            filterIndex: 24,
+        },
+        {
+            layerIndex: 5,
+            filterIndex: 87,
+        },
+        {
+            layerIndex: 6,
+            filterIndex: 28,
+        },
+        {
+            layerIndex: 6,
+            filterIndex: 124,
+        },
     ],
-    output: Array(10).fill(0)
 }
 
 let inputImg;
@@ -190,206 +183,117 @@ const renderCutoffs = {
     conv2: 3
 }
 
+const imageOversizing = 1.1;
+
 const skewAngle = 40;
 const skewAngleRad = skewAngle * Math.PI / 180;
 
-export function initSVG() {
+function initSVG() {
     const root = d3.select("#newTrainSection")
         .append("svg")
         .attr("id", "newTrainSvg")
         .attr("width", svgWidth)
         .attr("height", svgHeight);
     
-    const inputCellWidth = Math.cos(skewAngleRad) * inputLayerHeight / data.input[0][0].length;
-    const inputCellHeight = inputLayerHeight / data.input[0][0].length;
-    const inputLeftMargin = config.borderWidth;
-    const inputUpperOffset = Math.tan(skewAngleRad) * inputCellWidth * data.input[0][0].length;
-    const inputUpperMargin = config.borderWidth * 2+ inputUpperOffset;
+    const inputData = inputImg.arraySync()[0];
     const inputLayers = root.append("g")
-        .attr("id", "inputLayers")
-        .attr("transform", `translate(${inputLeftMargin},
-                                      ${inputUpperMargin})`);
-    for (let i = 0; i < data.input.length; ++i) {
+        .attr("id", "inputLayers");
+    for (let i = 0; i < innerLayerDisplay.input.length; ++i) {
         let vals;
-        if (i < data.input.length - 1) {
-            vals = filter2d(data.input[i], renderCutoffs.input);
+        if (i < innerLayerDisplay.input.length - 1) {
+            vals = filter2d(inputData, innerLayerDisplay.input[i].filterIndex, renderCutoffs.input);
         } else {
-            vals = data.input[i].flat();
+            vals = flatImage(inputData, innerLayerDisplay.input[1].filterIndex);
         }
 
         const inputWrapper = inputLayers.append("g")
-            .attr("id", `inputLayerWrapper-${i}`)
-            .attr("transform", `translate(${layerOffset * i},
-                                          ${0})
-                                skewY(${skewAngle * -1})`);
+            .attr("id", `inputLayerWrapper-${i}`);
         inputWrapper.selectAll(".cellColor")
             .data(vals)
             .enter()
             .append("rect")
-            .attr("width", inputCellWidth)
-            .attr("height", inputCellHeight)
-            .attr("x", (_, j) => {
-                if (i < data.input.length - 1) {
-                    return getFilteredCol(data.input[i][0].length, renderCutoffs.input, j) * inputCellWidth;
-                } else {
-                    return (j % data.input[i][0].length) * inputCellWidth;
-                }
-            })
-            .attr("y", (_, j) => {
-                if (i < data.input.length - 1) {
-                    return getFilteredRow(data.input[i][0].length, renderCutoffs.input, j) * inputCellHeight;
-                } else {
-                    return Math.floor(j / data.input[i][0].length) * inputCellHeight;
-                }
-            })
             .attr("stroke", config.borderColor)
-            .attr("stroke-width", config.borderWidth)
+            .attr("stroke-width", strokeSize)
             .classed("cellColor", true);
         const inputOutline = inputWrapper.append("rect")
             .attr("id", `inputOutline-${i}`)
-            .attr("width", inputCellWidth * data.input[i][0].length)
-            .attr("height", inputCellHeight * data.input[i].length)
             .attr("stroke", config.highlightColorIn)
-            .attr("stroke-width", config.borderWidth * 2)
+            .attr("stroke-width", outlineSize)
             .attr("pointer-events", "none")
             .attr("fill-opacity", 0);
     }
 
-    const conv1CellWidth = Math.cos(skewAngleRad) * conv1LayerHeight / data.conv1[0][0].length;
-    const conv1CellHeight = conv1LayerHeight / data.conv1[0][0].length;
-    const conv1LeftMargin = inputLeftMargin + config.borderWidth * 2 + (inputCellWidth * data.input[0][0].length) + (layerOffset * (data.input.length - 1)) + gapSize;
-    const conv1UpperOffset = Math.tan(skewAngleRad) * conv1CellWidth * data.conv1[0][0].length;
-    const conv1UpperMargin = config.borderWidth * 2 + (inputLayerHeight + inputUpperOffset - conv1LayerHeight - conv1UpperOffset) / 2 + Math.tan(skewAngleRad) * conv1CellWidth * data.conv1[0][0].length;
+    const conv1Data = prediction[innerLayerDisplay.conv1[0].layerIndex].arraySync()[0];
     const conv1Layers = root.append("g")
-        .attr("id", "conv1Layers")
-        .attr("transform", `translate(${conv1LeftMargin},
-                                      ${conv1UpperMargin})`);
-    for (let i = 0; i < data.conv1.length; ++i) {
+        .attr("id", "conv1Layers");
+    for (let i = 0; i < innerLayerDisplay.conv1.length; ++i) {
         let vals;
-        if (i < data.conv1.length - 1) {
-            vals = filter2d(data.conv1[i], renderCutoffs.conv1);
+        if (i < innerLayerDisplay.conv1.length - 1) {
+            vals = filter2d(conv1Data, i, renderCutoffs.conv1);
         } else {
-            vals = data.conv1[i].flat();
+            vals = flatImage(conv1Data, i);
         }
 
         const conv1Wrapper = conv1Layers.append("g")
-            .attr("id", `conv1LayerWrapper-${i}`)
-            .attr("transform", `translate(${layerOffset * i},
-                                          ${0})
-                                skewY(${skewAngle * -1})`);
+            .attr("id", `conv1LayerWrapper-${i}`);
         conv1Wrapper.selectAll(".cellColor")
             .data(vals)
             .enter()
             .append("rect")
-            .attr("width", conv1CellWidth)
-            .attr("height", conv1CellHeight)
-            .attr("x", (_, j) => {
-                if (i < data.conv1.length - 1) {
-                    return getFilteredCol(data.conv1[i][0].length, renderCutoffs.conv1, j) * conv1CellWidth;
-                } else {
-                    return (j % data.conv1[i][0].length) * conv1CellWidth;
-                }
-            })
-            .attr("y", (_, j) => {
-                if (i < data.conv1.length - 1) {
-                    return getFilteredRow(data.conv1[i][0].length, renderCutoffs.conv1, j) * conv1CellHeight;
-                } else {
-                    return Math.floor(j / data.conv1[i][0].length) * conv1CellHeight;
-                }
-            })
             .attr("stroke", config.borderColor)
-            .attr("stroke-width", config.borderWidth)
+            .attr("stroke-width", strokeSize)
             .classed("cellColor", true);
         const conv1Outline = conv1Wrapper.append("rect")
             .attr("id", `conv1Outline-${i}`)
-            .attr("width", conv1CellWidth * data.conv1[i][0].length)
-            .attr("height", conv1CellHeight * data.conv1[i].length)
             .attr("stroke", config.highlightColorIn)
-            .attr("stroke-width", config.borderWidth * 2)
+            .attr("stroke-width", outlineSize)
             .attr("pointer-events", "none")
             .attr("fill-opacity", 0);
     }
 
-    const conv2CellWidth = Math.cos(skewAngleRad) * conv2LayerHeight / data.conv2[0][0].length;
-    const conv2CellHeight = conv2LayerHeight / data.conv2[0][0].length;
-    const conv2LeftMargin = conv1LeftMargin + config.borderWidth * 2 + (conv1CellWidth * data.conv1[0][0].length) + (layerOffset * (data.conv1.length - 1)) + gapSize;
-    const conv2UpperOffset = Math.tan(skewAngleRad) * conv2CellWidth * data.conv2[0][0].length;
-    const conv2UpperMargin = config.borderWidth * 2 + (inputLayerHeight + inputUpperOffset - conv2LayerHeight - conv2UpperOffset) / 2 + Math.tan(skewAngleRad) * conv2CellWidth * data.conv2[0][0].length;
+    const conv2Data = prediction[innerLayerDisplay.conv2[0].layerIndex].arraySync()[0];
     const conv2Layers = root.append("g")
-        .attr("id", "conv2Layers")
-        .attr("transform", `translate(${conv2LeftMargin},
-                                      ${conv2UpperMargin})`);
-    for (let i = 0; i < data.conv2.length; ++i) {
+        .attr("id", "conv2Layers");
+    for (let i = 0; i < innerLayerDisplay.conv2.length; ++i) {
         let vals;
-        if (i < data.conv2.length - 1) {
-            vals = filter2d(data.conv2[i], renderCutoffs.conv2);
+        if (i < innerLayerDisplay.conv2.length - 1) {
+            vals = filter2d(conv2Data, i, renderCutoffs.conv2);
         } else {
-            vals = data.conv2[i].flat();
+            vals = flatImage(conv2Data, i);
         }
 
         const conv2Wrapper = conv2Layers.append("g")
-            .attr("id", `conv2LayerWrapper-${i}`)
-            .attr("transform", `translate(${layerOffset * i},
-                                          ${0})
-                                skewY(${skewAngle * -1})`);
+            .attr("id", `conv2LayerWrapper-${i}`);
         conv2Wrapper.selectAll(".cellColor")
             .data(vals)
             .enter()
             .append("rect")
-            .attr("width", conv2CellWidth)
-            .attr("height", conv2CellHeight)
-            .attr("x", (_, j) => {
-                if (i < data.conv2.length - 1) {
-                    return getFilteredCol(data.conv2[i][0].length, renderCutoffs.conv2, j) * conv2CellWidth;
-                } else {
-                    return (j % data.conv2[i][0].length) * conv2CellWidth;
-                }
-            })
-            .attr("y", (_, j) => {
-                if (i < data.conv2.length - 1) {
-                    return getFilteredRow(data.conv2[i][0].length, renderCutoffs.conv2, j) * conv2CellHeight;
-                } else {
-                    return Math.floor(j / data.conv2[i][0].length) * conv2CellHeight;
-                }
-            })
             .attr("stroke", config.borderColor)
-            .attr("stroke-width", config.borderWidth)
+            .attr("stroke-width", strokeSize)
             .classed("cellColor", true);
         const conv2Outline = conv2Wrapper.append("rect")
             .attr("id", `conv2Outline-${i}`)
-            .attr("width", conv2CellWidth * data.conv2[i][0].length)
-            .attr("height", conv2CellHeight * data.conv2[i].length)
             .attr("stroke", config.highlightColorIn)
-            .attr("stroke-width", config.borderWidth * 2)
+            .attr("stroke-width", outlineSize)
             .attr("pointer-events", "none")
             .attr("fill-opacity", 0);
     }
 
-    const outputCellWidth = outputLayerHeight / data.output.length;
-    const outputCellHeight = outputLayerHeight / data.output.length;
-    const outputLeftMargin = conv2LeftMargin + config.borderWidth * 2 + (conv2CellWidth * data.conv2[0][0].length) + (layerOffset * (data.conv2.length - 1)) + gapSize;
-    const outputUpperMargin = config.borderWidth + (inputLayerHeight + inputUpperOffset - outputLayerHeight) / 2;
+    const outputData = prediction[prediction.length - 1].arraySync()[0];
     const outputWrapper = root.append("g")
-        .attr("id", "outputWrapper")
-        .attr("transform", `translate(${outputLeftMargin},
-                                      ${outputUpperMargin})`);
+        .attr("id", "outputWrapper");
     outputWrapper.selectAll(".cellColor")
-        .data(data.output.flat())
+        .data(outputData)
         .enter()
         .append("rect")
-        .attr("width", outputCellWidth)
-        .attr("height", outputCellHeight)
         .attr("x", 0)
-        .attr("y", (_, j) => j * outputCellHeight)
         .attr("stroke", config.borderColor)
-        .attr("stroke-width", config.borderWidth)
+        .attr("stroke-width", outlineSize / 4)
         .classed("cellColor", true);
     const outputOutline = outputWrapper.append("rect")
         .attr("id", 'outputOutline')
-        .attr("width", outputCellWidth)
-        .attr("height", outputCellHeight * data.output.length)
         .attr("stroke", config.highlightColorIn)
-        .attr("stroke-width", config.borderWidth * 2)
+        .attr("stroke-width", outlineSize)
         .attr("pointer-events", "none")
         .attr("fill-opacity", 0);
 }
@@ -397,59 +301,73 @@ export function initSVG() {
 function drawFrame() {
     const root = d3.select("#newTrainSvg");
 
+    const inputData = inputImg.arraySync()[0];
     const inputLayers = root.select("#inputLayers");
-    for (let i = 0; i < data.input.length; ++i) {
+    for (let i = 0; i < innerLayerDisplay.input.length; ++i) {
         let vals;
-        if (i < data.input.length - 1) {
-            vals = filter2d(data.input[i], renderCutoffs.input);
+        if (i < innerLayerDisplay.input.length - 1) {
+            vals = filter2d(inputData, innerLayerDisplay.input[i].filterIndex, renderCutoffs.input);
         } else {
-            vals = data.input[i].flat();
+            vals = flatImage(inputData, innerLayerDisplay.input[1].filterIndex);
         }
 
         const inputWrapper = inputLayers.select(`#inputLayerWrapper-${i}`);
         inputWrapper.selectAll(".cellColor")
             .data(vals)
-            .attr("fill", d => d3.rgb(d, d, d));
+            .attr("fill", d => {
+                if (i == 0) {
+                    return d3.rgb(d * 255, 0, 0);
+                } else if (i == 1) {
+                    return d3.rgb(0, d * 255, 0);
+                } else {
+                    return d3.rgb(0, 0, d * 255);
+                }
+            });
     }
 
     const conv1Layers = root.select("#conv1Layers");
-    for (let i = 0; i < data.conv1.length; ++i) {
+    for (let i = 0; i < innerLayerDisplay.conv1.length; ++i) {
+        const conv1Data = prediction[innerLayerDisplay.conv1[i].layerIndex].arraySync()[0];
         let vals;
-        if (i < data.conv1.length - 1) {
-            vals = filter2d(data.conv1[i], renderCutoffs.conv1);
+        if (i < innerLayerDisplay.conv1.length - 1) {
+            vals = filter2d(conv1Data, innerLayerDisplay.conv1[i].filterIndex, renderCutoffs.conv1);
         } else {
-            vals = data.conv1[i].flat();
+            vals = flatImage(conv1Data, innerLayerDisplay.conv1[i].filterIndex);
         }
 
         const conv1Wrapper = conv1Layers.select(`#conv1LayerWrapper-${i}`);
         conv1Wrapper.selectAll(".cellColor")
             .data(vals)
-            .attr("fill", d => d3.rgb(d, d, d));
+            .attr("fill", d => d3.rgb(d * 255, d * 255, d * 255));
     }
 
     const conv2Layers = root.select("#conv2Layers");
-    for (let i = 0; i < data.conv2.length; ++i) {
+    for (let i = 0; i < innerLayerDisplay.conv2.length; ++i) {
+        const conv2Data = prediction[innerLayerDisplay.conv2[i].layerIndex].arraySync()[0];
         let vals;
-        if (i < data.conv2.length - 1) {
-            vals = filter2d(data.conv2[i], renderCutoffs.conv2);
+        if (i < innerLayerDisplay.conv2.length - 1) {
+            vals = filter2d(conv2Data, innerLayerDisplay.conv2[i].filterIndex, renderCutoffs.conv2);
         } else {
-            vals = data.conv2[i].flat();
+            vals = flatImage(conv2Data, innerLayerDisplay.conv2[i].filterIndex);
         }
+
         const conv2Wrapper = conv2Layers.select(`#conv2LayerWrapper-${i}`);
         conv2Wrapper.selectAll(".cellColor")
             .data(vals)
-            .attr("fill", d => d3.rgb(d, d, d));
+            .attr("fill", d => d3.rgb(d * 255, d * 255, d * 255));
     }
 
+    const outputData = prediction[14].arraySync()[0];
     const outputWrapper = root.select("#outputWrapper");
     outputWrapper.selectAll(".cellColor")
-        .attr("fill", d => d3.rgb(d, d, d));
+        .data(outputData.flat())
+        .attr("fill", d => d3.rgb(d * 255, d * 255, d * 255));
 }
 
 function recalculate() {
     svgWidth = config.svgWidth;
 
-    inputLayerHeight = svgWidth * 0.261438;
+    inputLayerHeight = svgWidth * 0.260;
     conv1LayerHeight = inputLayerHeight * 0.75;
     conv2LayerHeight = inputLayerHeight * 0.5;
     outputLayerHeight = inputLayerHeight * 1.1;
@@ -457,7 +375,9 @@ function recalculate() {
     layerOffset = inputLayerHeight * 0.1;
     gapSize = inputLayerHeight * 0.25;
 
-    svgHeight = inputLayerHeight + Math.sin(skewAngleRad) * inputLayerHeight + config.borderWidth * 4;
+    outlineSize = inputLayerHeight * 0.015;
+
+    svgHeight = inputLayerHeight + Math.sin(skewAngleRad) * inputLayerHeight + outlineSize * 2;
 }
 
 export function resizeUserTrain() {
@@ -468,15 +388,16 @@ export function resizeUserTrain() {
         .attr("width", svgWidth)
         .attr("height", svgHeight);
     
-    const inputCellWidth = Math.cos(skewAngleRad) * inputLayerHeight / data.input[0][0].length;
-    const inputCellHeight = inputLayerHeight / data.input[0][0].length;
-    const inputLeftMargin = config.borderWidth;
-    const inputUpperOffset = Math.tan(skewAngleRad) * inputCellWidth * data.input[0][0].length;
-    const inputUpperMargin = config.borderWidth * 2 + inputUpperOffset;
+    const inputData = inputImg.arraySync()[0];
+    const inputCellWidth = Math.cos(skewAngleRad) * inputLayerHeight / inputData[0].length;
+    const inputCellHeight = inputLayerHeight / inputData[0].length;
+    const inputLeftMargin = outlineSize / 2;
+    const inputUpperOffset = Math.tan(skewAngleRad) * inputCellWidth * inputData[0].length;
+    const inputUpperMargin = outlineSize + inputUpperOffset;
     const inputLayers = root.select("#inputLayers")
         .attr("transform", `translate(${inputLeftMargin},
                                       ${inputUpperMargin})`);
-    for (let i = 0; i < data.input.length; ++i) {
+    for (let i = 0; i < innerLayerDisplay.input.length; ++i) {
         const inputWrapper = inputLayers.selectAll(`#inputLayerWrapper-${i}`)
             .attr("transform", `translate(${layerOffset * i},
                                           ${0})
@@ -484,99 +405,191 @@ export function resizeUserTrain() {
         inputWrapper.selectAll(".cellColor")
             .attr("width", inputCellWidth)
             .attr("height", inputCellHeight)
-            .attr("x", (_, j) => {
-                if (i < data.input.length - 1) {
-                    return getFilteredCol(data.input[i][0].length, renderCutoffs.input, j) * inputCellWidth;
+            .attr("width", (_, j) => {
+                if (i < innerLayerDisplay.input.length - 1) {
+                    if (getFilteredCol(inputData[0].length, renderCutoffs.input, j) < inputData[0].length - 1) {
+                        return inputCellWidth * imageOversizing;
+                    } else {
+                        return inputCellWidth;
+                    }
                 } else {
-                    return (j % data.input[i][0].length) * inputCellWidth;
+                    if (j % inputData[0].length < inputData[0].length - 1) {
+                        return inputCellWidth * imageOversizing;
+                    } else {
+                        return inputCellWidth;
+                    }
+                }
+            })
+            .attr("height", (_, j) => {
+                if (i < innerLayerDisplay.input.length - 1) {
+                    if (getFilteredRow(inputData[0].length, renderCutoffs.input, j) < inputData.length - 1) {
+                        return inputCellHeight * imageOversizing;
+                    } else {
+                        return inputCellHeight;
+                    }
+                } else {
+                    if (j / inputData[0].length < inputData.length - 1) {
+                        return inputCellHeight * imageOversizing;
+                    } else {
+                        return inputCellHeight;
+                    }
+                }
+            })
+            .attr("x", (_, j) => {
+                if (i < innerLayerDisplay.input.length - 1) {
+                    return getFilteredCol(inputData[0].length, renderCutoffs.input, j) * inputCellWidth;
+                } else {
+                    return (j % inputData[0].length) * inputCellWidth;
                 }
             })
             .attr("y", (_, j) => {
-                if (i < data.input.length - 1) {
-                    return getFilteredRow(data.input[i][0].length, renderCutoffs.input, j) * inputCellHeight;
+                if (i < innerLayerDisplay.input.length - 1) {
+                    return getFilteredRow(inputData[0].length, renderCutoffs.input, j) * inputCellHeight;
                 } else {
-                    return Math.floor(j / data.input[i][0].length) * inputCellHeight;
+                    return Math.floor(j / inputData[0].length) * inputCellHeight;
                 }
             })
         inputWrapper.select(`#inputOutline-${i}`)
-            .attr("width", inputCellWidth * data.input[i][0].length)
-            .attr("height", inputCellHeight * data.input[i].length);
+            .attr("width", inputCellWidth * inputData[0].length)
+            .attr("height", inputCellHeight * inputData.length)
+            .attr("stroke-width", outlineSize);
     }
 
-    const conv1CellWidth = Math.cos(skewAngleRad) * conv1LayerHeight / data.conv1[0][0].length;
-    const conv1CellHeight = conv1LayerHeight / data.conv1[0][0].length;
-    const conv1LeftMargin = inputLeftMargin + config.borderWidth * 2 + (inputCellWidth * data.input[0][0].length) + (layerOffset * (data.input.length - 1)) + gapSize;
-    const conv1UpperOffset = Math.tan(skewAngleRad) * conv1CellWidth * data.conv1[0][0].length;
-    const conv1UpperMargin = config.borderWidth * 2 + (inputLayerHeight + inputUpperOffset - conv1LayerHeight - conv1UpperOffset) / 2 + Math.tan(skewAngleRad) * conv1CellWidth * data.conv1[0][0].length;
+    const conv1Data = prediction[innerLayerDisplay.conv1[0].layerIndex].arraySync()[0];
+    const conv1CellWidth = Math.cos(skewAngleRad) * conv1LayerHeight / conv1Data[0].length;
+    const conv1CellHeight = conv1LayerHeight / conv1Data[0].length;
+    const conv1LeftMargin = inputLeftMargin + outlineSize + (inputCellWidth * inputData[0].length) + (layerOffset * (innerLayerDisplay.input.length - 1)) + gapSize;
+    const conv1UpperOffset = Math.tan(skewAngleRad) * conv1CellWidth * conv1Data[0].length;
+    const conv1UpperMargin = outlineSize + (inputLayerHeight + inputUpperOffset - conv1LayerHeight - conv1UpperOffset) / 2 + Math.tan(skewAngleRad) * conv1CellWidth * conv1Data[0].length;
     const conv1Layers = root.select("#conv1Layers")
         .attr("transform", `translate(${conv1LeftMargin},
                                       ${conv1UpperMargin})`);
-    for (let i = 0; i < data.conv1.length; ++i) {
+    for (let i = 0; i < innerLayerDisplay.conv1.length; ++i) {
         const conv1Wrapper = conv1Layers.select(`#conv1LayerWrapper-${i}`)
             .attr("transform", `translate(${layerOffset * i},
                                           ${0})
                                 skewY(${skewAngle * -1})`);
         conv1Wrapper.selectAll(".cellColor")
-            .attr("width", conv1CellWidth)
-            .attr("height", conv1CellHeight)
-            .attr("x", (_, j) => {
-                if (i < data.conv1.length - 1) {
-                    return getFilteredCol(data.conv1[i][0].length, renderCutoffs.conv1, j) * conv1CellWidth;
+            .attr("width", (_, j) => {
+                if (i < innerLayerDisplay.conv1.length - 1) {
+                    if (getFilteredCol(conv1Data[0].length, renderCutoffs.conv1, j) < conv1Data[0].length - 1) {
+                        return conv1CellWidth * imageOversizing;
+                    } else {
+                        return conv1CellWidth;
+                    }
                 } else {
-                    return (j % data.conv1[i][0].length) * conv1CellWidth;
+                    if (j % conv1Data[0].length < conv1Data[0].length - 1) {
+                        return conv1CellWidth * imageOversizing;
+                    } else {
+                        return conv1CellWidth;
+                    }
+                }
+            })
+            .attr("height", (_, j) => {
+                if (i < innerLayerDisplay.conv1.length - 1) {
+                    if (getFilteredRow(conv1Data[0].length, renderCutoffs.conv1, j) < conv1Data.length - 1) {
+                        return conv1CellHeight * imageOversizing;
+                    } else {
+                        return conv1CellHeight;
+                    }
+                } else {
+                    if (j / conv1Data[0].length < conv1Data.length - 1) {
+                        return conv1CellHeight * imageOversizing;
+                    } else {
+                        return conv1CellHeight;
+                    }
+                }
+            })
+            .attr("x", (_, j) => {
+                if (i < innerLayerDisplay.conv1.length - 1) {
+                    return getFilteredCol(conv1Data[0].length, renderCutoffs.conv1, j) * conv1CellWidth;
+                } else {
+                    return (j % conv1Data[0].length) * conv1CellWidth;
                 }
             })
             .attr("y", (_, j) => {
-                if (i < data.conv1.length - 1) {
-                    return getFilteredRow(data.conv1[i][0].length, renderCutoffs.conv1, j) * conv1CellHeight;
+                if (i < innerLayerDisplay.conv1.length - 1) {
+                    return getFilteredRow(conv1Data[0].length, renderCutoffs.conv1, j) * conv1CellHeight;
                 } else {
-                    return Math.floor(j / data.conv1[i][0].length) * conv1CellHeight;
+                    return Math.floor(j / conv1Data[0].length) * conv1CellHeight;
                 }
             })
         conv1Wrapper.select(`#conv1Outline-${i}`)
-            .attr("width", conv1CellWidth * data.conv1[i][0].length)
-            .attr("height", conv1CellHeight * data.conv1[i].length);
+            .attr("width", conv1CellWidth * conv1Data[0].length)
+            .attr("height", conv1CellHeight * conv1Data.length)
+            .attr("stroke-width", outlineSize);
     }
 
-    const conv2CellWidth = Math.cos(skewAngleRad) * conv2LayerHeight / data.conv2[0][0].length;
-    const conv2CellHeight = conv2LayerHeight / data.conv2[0][0].length;
-    const conv2LeftMargin = conv1LeftMargin + config.borderWidth * 2 + (conv1CellWidth * data.conv1[0][0].length) + (layerOffset * (data.conv1.length - 1)) + gapSize;
-    const conv2UpperOffset = Math.tan(skewAngleRad) * conv2CellWidth * data.conv2[0][0].length;
-    const conv2UpperMargin = config.borderWidth * 2 + (inputLayerHeight + inputUpperOffset - conv2LayerHeight - conv2UpperOffset) / 2 + Math.tan(skewAngleRad) * conv2CellWidth * data.conv2[0][0].length;
+    const conv2Data = prediction[innerLayerDisplay.conv2[0].layerIndex].arraySync()[0];
+    const conv2CellWidth = Math.cos(skewAngleRad) * conv2LayerHeight / conv2Data[0].length;
+    const conv2CellHeight = conv2LayerHeight / conv2Data[0].length;
+    const conv2LeftMargin = conv1LeftMargin + outlineSize + (conv1CellWidth * conv1Data[0].length) + (layerOffset * (innerLayerDisplay.conv1.length - 1)) + gapSize;
+    const conv2UpperOffset = Math.tan(skewAngleRad) * conv2CellWidth * conv2Data[0].length;
+    const conv2UpperMargin = outlineSize + (inputLayerHeight + inputUpperOffset - conv2LayerHeight - conv2UpperOffset) / 2 + Math.tan(skewAngleRad) * conv2CellWidth * conv2Data[0].length;
     const conv2Layers = root.select("#conv2Layers")
         .attr("transform", `translate(${conv2LeftMargin},
                                       ${conv2UpperMargin})`);
-    for (let i = 0; i < data.conv2.length; ++i) {
+    for (let i = 0; i < innerLayerDisplay.conv2.length; ++i) {
         const conv2Wrapper = conv2Layers.select(`#conv2LayerWrapper-${i}`)
             .attr("transform", `translate(${layerOffset * i},
                                           ${0})
                                 skewY(${skewAngle * -1})`);
         conv2Wrapper.selectAll(".cellColor")
-            .attr("width", conv2CellWidth)
-            .attr("height", conv2CellHeight)
-            .attr("x", (_, j) => {
-                if (i < data.conv2.length - 1) {
-                    return getFilteredCol(data.conv2[i][0].length, renderCutoffs.conv2, j) * conv2CellWidth;
+            .attr("width", (_, j) => {
+                if (i < innerLayerDisplay.conv2.length - 1) {
+                    if (getFilteredCol(conv2Data[0].length, renderCutoffs.conv2, j) < conv2Data[0].length - 1) {
+                        return conv2CellWidth * imageOversizing;
+                    } else {
+                        return conv2CellWidth;
+                    }
                 } else {
-                    return (j % data.conv2[i][0].length) * conv2CellWidth;
+                    if (j % conv2Data[0].length < conv2Data[0].length - 1) {
+                        return conv2CellWidth * imageOversizing;
+                    } else {
+                        return conv2CellWidth;
+                    }
+                }
+            })
+            .attr("height", (_, j) => {
+                if (i < innerLayerDisplay.conv2.length - 1) {
+                    if (getFilteredRow(conv2Data[0].length, renderCutoffs.conv2, j) < conv2Data.length - 1) {
+                        return conv2CellHeight * imageOversizing;
+                    } else {
+                        return conv2CellHeight;
+                    }
+                } else {
+                    if (j / conv2Data[0].length < conv2Data.length - 1) {
+                        return conv2CellHeight * imageOversizing;
+                    } else {
+                        return conv2CellHeight;
+                    }
+                }
+            })
+            .attr("x", (_, j) => {
+                if (i < innerLayerDisplay.conv2.length - 1) {
+                    return getFilteredCol(conv2Data[0].length, renderCutoffs.conv2, j) * conv2CellWidth;
+                } else {
+                    return (j % conv2Data[0].length) * conv2CellWidth;
                 }
             })
             .attr("y", (_, j) => {
-                if (i < data.conv2.length - 1) {
-                    return getFilteredRow(data.conv2[i][0].length, renderCutoffs.conv2, j) * conv2CellHeight;
+                if (i < innerLayerDisplay.conv2.length - 1) {
+                    return getFilteredRow(conv2Data[0].length, renderCutoffs.conv2, j) * conv2CellHeight;
                 } else {
-                    return Math.floor(j / data.conv2[i][0].length) * conv2CellHeight;
+                    return Math.floor(j / conv2Data[0].length) * conv2CellHeight;
                 }
             })
         conv2Wrapper.select(`#conv2Outline-${i}`)
-            .attr("width", conv2CellWidth * data.conv2[i][0].length)
-            .attr("height", conv2CellHeight * data.conv2[i].length);
+            .attr("width", conv2CellWidth * conv2Data[0].length)
+            .attr("height", conv2CellHeight * conv2Data.length)
+            .attr("stroke-width", outlineSize);
     }
 
-    const outputCellWidth = outputLayerHeight / data.output.length;
-    const outputCellHeight = outputLayerHeight / data.output.length;
-    const outputLeftMargin = conv2LeftMargin + config.borderWidth * 2+ (conv2CellWidth * data.conv2[0][0].length) + (layerOffset * (data.conv2.length - 1)) + gapSize;
-    const outputUpperMargin = config.borderWidth + (inputLayerHeight + inputUpperOffset - outputLayerHeight) / 2;
+    const outputData = prediction[prediction.length - 1].arraySync()[0];
+    const outputCellWidth = outputLayerHeight / outputData.length;
+    const outputCellHeight = outputLayerHeight / outputData.length;
+    const outputLeftMargin = conv2LeftMargin + outlineSize + (conv2CellWidth * conv2Data[0].length) + (layerOffset * (innerLayerDisplay.conv2.length - 1)) + gapSize;
+    const outputUpperMargin = outlineSize / 2 + (inputLayerHeight + inputUpperOffset - outputLayerHeight) / 2;
     const outputWrapper = root.select("#outputWrapper")
         .attr("transform", `translate(${outputLeftMargin},
                                       ${outputUpperMargin})`);
@@ -587,5 +600,6 @@ export function resizeUserTrain() {
         .attr("y", (_, j) => j * outputCellHeight);
     outputWrapper.select("#outputOutline")
         .attr("width", outputCellWidth)
-        .attr("height", outputCellHeight * data.output.length);
+        .attr("height", outputCellHeight * outputData.length)
+        .attr("stroke-width", outlineSize);
 }
