@@ -1,11 +1,105 @@
 import * as d3 from "d3";
+import * as tf from '@tensorflow/tfjs';
 
 import * as config from "./config";
 
+let curIndex = 0;
+
 export function initUserTrainSection() {
-    recalculate();
-    initSVG();
-    drawFrame();
+    loadModel().then((loadedModel) => {
+        loadImage().then((imageData) => {
+            model = loadedModel;
+            inputImg = imageData;
+            prediction = model.predict(inputImg);
+
+            createImage(prediction[4], 22, `output1`);
+            createImage(prediction[4], 26, `output2`);
+            createImage(prediction[4], 42, `output3`);
+            createImage(prediction[5], 15, `output4`);
+            createImage(prediction[5], 24, `output5`);
+            createImage(prediction[5], 87, `output6`);
+            createImage(prediction[6], 28, `output7`);
+            createImage(prediction[6], 124, `output8`);
+
+            recalculate();
+            initSVG();
+            drawFrame();
+        });
+    });
+}
+
+function nextImages() {
+    const numOutputs = 8;
+
+    for (let i = 0; i < numOutputs; ++i) {
+        createImage(prediction[3], curIndex + i, `output${i + 1}`);
+    }
+
+    curIndex += numOutputs;
+
+    console.log(`Displaying [${curIndex - numOutputs}, ${curIndex - 1}]`);
+}
+
+const MODEL_URL = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/mjh/src/trainedVGG/model.json";
+const IMG_URL = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/mjh/Images/dog.png";
+
+function loadImage() {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(tf.browser.fromPixels(image).asType("float32").div(255).expandDims(0));
+        image.onerror = reject;
+        image.crossOrigin = "Anonymous";
+        image.src = IMG_URL;
+    });
+}
+async function loadModel() {
+    const loadedModel = await tf.loadLayersModel(MODEL_URL);
+
+    const NUM_LAYERS = 15;
+    const layerOutputs = Array(NUM_LAYERS);
+    for (let i = 0; i < NUM_LAYERS; ++i) {
+        layerOutputs[i] = loadedModel.getLayer(`activation_${i + 1}`).output;
+    }
+
+    const allOutputsModel = tf.model({inputs: loadedModel.inputs, outputs: layerOutputs}); 
+    return allOutputsModel;
+}
+
+document.getElementById("nextImages").onclick = nextImages;
+function createImage(t, filterIndex, imageId) {
+    const data = t.squeeze(0).mul(255).arraySync();
+
+    const width = data[0].length;
+    const height = data.length;
+    const buffer = new Uint8ClampedArray(width * height * 4); // have enough bytes
+
+    for(let y = 0; y < height; y++) {
+        for(let x = 0; x < width; x++) {
+            let pos = (y * width + x) * 4; // position in buffer based on x and y
+            buffer[pos  ] = data[y][x][filterIndex];           // some R value [0, 255]
+            buffer[pos+1] = data[y][x][filterIndex];           // some G value
+            buffer[pos+2] = data[y][x][filterIndex];           // some B value
+            buffer[pos+3] = 255;           // set alpha channel
+        }
+    }
+
+    // create off-screen canvas element
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // create imageData object
+    let idata = ctx.createImageData(width, height);
+
+    // set our buffer as source
+    idata.data.set(buffer);
+
+    // update canvas with new data
+    ctx.putImageData(idata, 0, 0);
+
+    document.getElementById(imageId).src = canvas.toDataURL();
 }
 
 let svgWidth;
@@ -85,6 +179,10 @@ let data = {
     ],
     output: Array(10).fill(0)
 }
+
+let inputImg;
+let model;
+let prediction;
 
 const renderCutoffs = {
     input: 5,
