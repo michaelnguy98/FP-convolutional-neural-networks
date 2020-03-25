@@ -17,8 +17,10 @@ function loadSections() {
     initMultiConvSection();
     initConvIntroSection();
     initUserTrainSection();
-    init_cnn_vis();
-    init_real_cnn();
+    //init_cnn_vis();
+    //init_real_cnn();
+
+    window.onresize = onResize;
 }
 
 function onResize() {
@@ -30,10 +32,8 @@ function onResize() {
     resizeMultiConv();
     resizeUserTrain();
 
-    resize_cnn_vis()
-    resize_real_cnn()
+    //resize_cnn_vis()
+    //resize_real_cnn()
 }
 
 window.onload = loadSections;
-
-window.onresize = onResize;

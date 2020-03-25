@@ -4,17 +4,23 @@ import * as tf from '@tensorflow/tfjs';
 import * as config from "./config";
 
 export function initUserTrainSection() {
-    loadModel().then((loadedModel) => {
+    loadModel().then(modelData => {
         loadImage().then((imageData) => {
-            model = loadedModel;
+            [model, weights] = modelData;
+            weightsScalingFactors = initScalingFactors(weights);
+            updateScalingState();
+
             inputImg = imageData;
-            prediction = model.predict(inputImg);
+
+            prediction = makePrediction();
 
             initSVG();
             resizeUserTrain();
             drawFrame();
         });
     });
+
+    initSlider();
 }
 
 const MODEL_URL = "https://raw.githubusercontent.com/UW-CSE442-WI20/FP-convolutional-neural-networks/mjh/src/trainedVGG/model.json";
@@ -32,14 +38,56 @@ function loadImage() {
 async function loadModel() {
     const loadedModel = await tf.loadLayersModel(MODEL_URL);
 
-    const NUM_LAYERS = 15;
     const layerOutputs = Array(NUM_LAYERS);
+    const layerWeights = Array(NUM_LAYERS);
     for (let i = 0; i < NUM_LAYERS; ++i) {
-        layerOutputs[i] = loadedModel.getLayer(`activation_${i + 1}`).output;
+        if (i == NUM_LAYERS - 1) {
+            layerOutputs[i] = loadedModel.getLayer(`dense_${NUM_LAYERS - NUM_CONV_LAYERS}`).output;
+        } else {
+            layerOutputs[i] = loadedModel.getLayer(`activation_${i + 1}`).output;
+        }
+
+        if (i < NUM_CONV_LAYERS) {
+            layerWeights[i] = loadedModel.getLayer(`conv2d_${i + 1}`).getWeights().map(v => v.clone());
+        } else {
+            layerWeights[i] = loadedModel.getLayer(`dense_${i - NUM_CONV_LAYERS + 1}`).getWeights().map(v => v.clone());
+        }
     }
 
     const allOutputsModel = tf.model({inputs: loadedModel.inputs, outputs: layerOutputs}); 
-    return allOutputsModel;
+    return [allOutputsModel, layerWeights];
+}
+function initScalingFactors(weights) {
+    const factors = Array(weights.length);
+    for (let i = 0; i < weights.length; ++i) {
+        factors[i] = Array(weights[i].length);
+        for (let j = 0; j < weights[i].length; ++j) {
+            factors[i][j] = tf.randomUniform(weights[i][j].shape, -1, 1, "float32", 1234554321)
+        }
+    }
+    return factors;
+}
+function updateScalingState() {
+    const curValue = d3.select("#newTrainSection").select("#trainSlider").node().value;
+    weightsScalingState = ((curValue / SLIDER_NUM_TICKS) - 0.5) * WEIGHTS_MAX_SCALE;
+}
+function makePrediction() {
+    function getPrediction() {
+        for (let i = 0; i < NUM_LAYERS; ++i) {
+            const newWeights = Array(weights[i].length);
+            for (let j = 0; j < weights[i].length; ++j) {
+                newWeights[j] = tf.add(weights[i][j], tf.mul(weightsScalingFactors[i][j], weightsScalingState));
+            }
+
+            if (i < NUM_CONV_LAYERS) {
+                model.getLayer(`conv2d_${i + 1}`).setWeights(newWeights);
+            } else {
+                model.getLayer(`dense_${i - NUM_CONV_LAYERS + 1}`).setWeights(newWeights);
+            }
+        }
+        return model.predict(inputImg);
+    }
+    return tf.tidy(getPrediction);
 }
 
 let svgWidth;
@@ -173,15 +221,24 @@ let innerLayerDisplay = {
     ],
 }
 
-let inputImg;
-let model;
-let prediction;
-
 const renderCutoffs = {
     input: 5,
     conv1: 4,
     conv2: 3
 }
+
+const SLIDER_NUM_TICKS = 100;
+const WEIGHTS_MAX_SCALE = 0.1;
+
+const NUM_LAYERS = 15;
+const NUM_CONV_LAYERS = 13;
+
+let inputImg;
+let model;
+let weights;
+let weightsScalingFactors;
+let weightsScalingState;
+let prediction;
 
 const imageOversizing = 1.1;
 
@@ -298,6 +355,25 @@ function initSVG() {
         .attr("fill-opacity", 0);
 }
 
+function initSlider() {
+    const root = d3.select("#newTrainSection");
+
+    const slider = root.append("div")
+        .style("text-align", "center")
+        .append("input")
+        .attr("type", "range")
+        .attr("id", "trainSlider")
+        .style("width", "50%")
+        .attr("min", 1)
+        .attr("max", SLIDER_NUM_TICKS)
+        .attr("value", SLIDER_NUM_TICKS / 2)
+        .on("input", () => {
+            updateScalingState();
+            prediction = makePrediction();
+            drawFrame();
+        });
+}
+
 function drawFrame() {
     const root = d3.select("#newTrainSvg");
 
@@ -358,10 +434,17 @@ function drawFrame() {
     }
 
     const outputData = prediction[14].arraySync()[0];
+    const maxVal = Math.max(...outputData);
     const outputWrapper = root.select("#outputWrapper");
     outputWrapper.selectAll(".cellColor")
         .data(outputData.flat())
-        .attr("fill", d => d3.rgb(d * 255, d * 255, d * 255));
+        .attr("fill", d => {
+            if (maxVal > 0) {
+                return d3.rgb(d / maxVal * 255, d / maxVal * 255, d / maxVal * 255);
+            } else {
+                return d3.rgb(0, 0, 0);
+            }
+        });
 }
 
 function recalculate() {
