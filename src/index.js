@@ -18,7 +18,7 @@ function loadSections() {
     initConvIntroSection();
     initUserTrainSection();
     //init_cnn_vis();
-    //init_real_cnn();
+    init_real_cnn();
 
     window.onresize = onResize;
 }
@@ -33,7 +33,7 @@ function onResize() {
     resizeUserTrain();
 
     //resize_cnn_vis()
-    //resize_real_cnn()
+    resize_real_cnn()
 }
 
 window.onload = loadSections;

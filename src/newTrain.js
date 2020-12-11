@@ -374,8 +374,14 @@ function initSlider() {
         });
 }
 
+function initLines() {
+    const root = d3.select("#newTrainSection")
+        .select("#newTrainSvg");
+}
+
 function drawFrame() {
-    const root = d3.select("#newTrainSvg");
+    const root = d3.select("#newTrainSection")
+        .select("#newTrainSvg");
 
     const inputData = inputImg.arraySync()[0];
     const inputLayers = root.select("#inputLayers");
