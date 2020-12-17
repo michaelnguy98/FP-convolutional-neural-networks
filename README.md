@@ -2,7 +2,7 @@
 
 [Final Project](https://uw-cse442-wi20.github.io/FP-convolutional-neural-networks/)
 
-Post-mortem version here: [Convolutional Neural Networks](http://ec2-52-32-131-3.us-west-2.compute.amazonaws.com:1234/)
+Post-mortem version here: [convolutionalneuralnetworks.tk](https://convolutionalneuralnetworks.tk)
 
 # A3 Write Up
 
