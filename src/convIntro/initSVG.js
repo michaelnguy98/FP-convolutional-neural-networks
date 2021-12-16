@@ -1,14 +1,12 @@
 import * as d3 from "d3";
 
-import * as config from "./config";
+import * as config from "../config";
 
 /**
  * Initialize the root SVG.
  */
 export function initSVG() {
-    d3.select("#convIntro")
-        .style("width", config.svgWidth + "px")
-        .style("padding", (config.kernelCellWidth / 4) + "px")
+    d3.select("#convIntroSection")
         .append("svg")
         .attr("id", "rootDisplay")
         .attr("width", 2 * config.img_width + config.spaceBetween + config.borderWidth)
@@ -57,8 +55,9 @@ export function initKernelImg() {
 export function initEffects() {
     const effects = d3.select("#rootDisplay")
         .append("g")
+        .attr("id", "effectsLayer")
         .attr("visibility", "hidden");
-    
+
     const inputHighlight = effects.append("g")
         .attr("id", "inputHighlight")
         .attr("pointer-events", "none");
@@ -77,18 +76,20 @@ export function initEffects() {
         .attr("fill-opacity", 0)
         .attr("stroke", config.borderColor)
         .attr("stroke-width", config.borderWidth)
-        .classed("highlightCell, true");
+        .classed("highlightCell", true);
     inputHighlight.append("rect")
+        .attr("id", "inputHighlightOutline")
         .attr("width", config.cellWidth * config.kernelWidth)
         .attr("height", config.cellHeight * config.kernelHeight)
         .attr("fill-opacity", 0)
         .attr("stroke", config.highlightColorIn)
         .attr("stroke-width", config.highlightOutlineWidth);
-    
+
     const outputHighlight = effects.append("g")
         .attr("id", "outputHighlight")
         .attr("pointer-events", "none");
     outputHighlight.append("rect")
+        .attr("id", "outputHighlightOutline")
         .attr("width", config.cellWidth)
         .attr("height", config.cellHeight)
         .attr("fill-opacity", 0)
@@ -153,9 +154,10 @@ let text_area_h = config.spaceBetween * 7/10;
 export function initAnnotations() {
     const annotation = d3.select("#rootDisplay")
         .append("g")
+        .attr("id", "annotationWrapper")
         .attr("transform", `translate(${config.img_width + config.spaceBetween / 2 - text_area_w / 2 + config.borderWidth / 2},
                                       ${config.img_height - config.cellHeight - text_area_h - config.kernelCellHeight * (config.kernelHeight + 1/2) + config.borderWidth / 2})`);
-    
+
     const g = annotation.append("g")
         .attr("id", "annotation")
         .attr("pointer-events", "none")
@@ -181,44 +183,187 @@ export function initAnnotations() {
         .attr("id", "annotation-text");
 }
 
+let orig_text = ""
 // TOOD: move to other file
 export function updateAnnotation(text) {
+    orig_text = text
     d3.select("#annotation-text").text(text).call(wrap, text_area_w);
 }
 
-export function initControls() {
-    let padding = config.kernelCellWidth / 4
+export function resizeIntroConv() {
+    const root = d3.select("#convIntroSection")
+        .select("#rootDisplay")
+        .attr("width", 2 * config.img_width + config.spaceBetween + config.borderWidth)
+        .attr("height", config.img_height + config.borderWidth);
 
-    d3.select("#image-selection")
-        .style("transform", "translate(0%, -50%)")
-        .style("top", padding + "px")
-        .style("left", (config.cellWidth + padding) + "px")
+    root.select("#inputImg")
+        .attr("transform", `translate(${config.cellWidth + config.borderWidth / 2},
+                                      ${config.cellHeight + config.borderWidth / 2})`);
+    root.select("#inputImg")
+        .selectAll(".cellColor")
+        .attr("x", function(_, i) {
+            return config.cellWidth * (i % config.inputHeight)
+        })
+        .attr("y", function(_, i) {
+            return config.cellHeight * (Math.floor(i / config.inputHeight))
+        })
+        .attr("width", config.cellWidth)
+        .attr("height", config.cellHeight)
+        .attr("stroke", config.borderColor)
+        .attr("stroke-width", config.borderWidth);
+    root.select("#inputImg")
+        .selectAll(".cellText")
+        .attr("x", function(_, i) {
+            return config.cellWidth * (i % config.inputWidth) + config.cellWidth / 2;
+        })
+        .attr("y", function(_, i) {
+            return config.cellHeight * (Math.floor(i / config.inputWidth)) + config.cellHeight / 2;
+        })
+        .attr("font-size", config.fontSize);
 
-    d3.select("#filter-selection")
-        .style("transform", "translate(-50%, -50%)")
-        .style("top", (config.img_height - config.kernelCellHeight * config.kernelHeight - config.cellHeight * 3 + config.borderWidth / 2) + "px")
-        .style("left", (padding + config.img_width + config.spaceBetween / 2 + config.borderWidth) + "px")
+    root.select("#outputImg")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween + config.cellWidth + config.borderWidth / 2},
+                                      ${config.inputHeightLoss * config.cellHeight + config.cellHeight + config.borderWidth / 2})`);
+    root.select("#outputImg")
+        .selectAll(".cellColor")
+        .attr("x", function(_, i) {
+            return config.cellWidth * (i % config.outputHeight)
+        })
+        .attr("y", function(_, i) {
+            return config.cellHeight * (Math.floor(i / config.outputHeight))
+        })
+        .attr("width", config.cellWidth)
+        .attr("height", config.cellHeight)
+        .attr("stroke", config.borderColor)
+        .attr("stroke-width", config.borderWidth);
+    root.select("#outputImg")
+        .selectAll(".cellText")
+        .attr("x", function(_, i) {
+            return config.cellWidth * (i % config.outputWidth) + config.cellWidth / 2;
+        })
+        .attr("y", function(_, i) {
+            return config.cellHeight * (Math.floor(i / config.outputWidth)) + config.cellHeight / 2;
+        })
+        .attr("font-size", config.fontSize);
 
-    d3.select("#next")
-        .style("transform", "translate(0%, -50%)")
-        .style("top", 0 + "px")
-        .style("left", (config.cellWidth * (config.inputWidth + 3) + config.spaceBetween) + "px")
+    root.select("#kernelImg")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4 + config.borderWidth},
+                                      ${config.img_height - config.kernelCellHeight * config.kernelHeight - config.cellHeight + config.borderWidth / 2})`);
+    root.select("#kernelImg")
+        .selectAll(".cellColor")
+        .attr("x", function(_, i) {
+            return (i % config.kernelWidth) * config.kernelCellWidth;
+        })
+        .attr("y", function(_, i) {
+            return (Math.floor(i / config.kernelWidth) * config.kernelCellHeight);
+        })
+        .attr("width", config.kernelCellWidth)
+        .attr("height", config.kernelCellHeight)
+        .attr("stroke", config.borderColor)
+        .attr("stroke-width", config.borderWidth);
+    root.select("#kernelImg")
+        .selectAll(".cellText")
+        .attr("x", function(_, i) {
+            return (i % config.kernelWidth) * config.kernelCellWidth + config.kernelCellWidth / 2;
+        })
+        .attr("y", function(_, i) {
+            return (Math.floor(i / config.kernelWidth)) * config.kernelCellHeight + config.kernelCellHeight / 2;
+        })
+        .attr("font-size", config.kernelFontSize);
 
-    d3.select("#next")
-        .style("transform", "translate(0%, -50%)")
-        .style("top", padding + "px")
-        .style("left", (padding + config.cellWidth * (config.inputWidth + 3) + config.spaceBetween) + "px")
+    const inputHighlight = root.select("#inputHighlight");
+    inputHighlight.selectAll(".highlightCell")
+        .attr("x", function(_, i) {
+            return (i % config.kernelWidth) * config.cellWidth;
+        })
+        .attr("y", function(_, i) {
+            return (Math.floor(i / config.kernelWidth) * config.cellHeight);
+        })
+        .attr("width", config.cellWidth)
+        .attr("height", config.cellHeight);
+    inputHighlight.select("#inputHighlightOutline")
+        .attr("width", config.cellWidth * config.kernelWidth)
+        .attr("height", config.cellHeight * config.kernelHeight);
 
-    d3.select("#prev")
-        .style("transform", "translate(-100%, -50%)")
-        .style("top", padding + "px")
-        .style("left", (padding + config.cellWidth * (config.inputWidth + 1)) + "px")
+    const outputHighlight = root.select("#outputHighlight");
+    outputHighlight.select("#outputHighlightOutline")
+        .attr("width", config.cellWidth)
+        .attr("height", config.cellHeight);
 
-    d3.select("#auto-conv")
-        .style("top", (-padding + config.cellHeight + config.borderWidth / 2) + "px")
-        .style("left", (padding + config.cellWidth * (config.inputWidth + 1) + config.spaceBetween * 1/4) + "px")
+    text_area_w = config.spaceBetween * 9/10;
+    text_area_h = config.spaceBetween * 7/10;
 
-    d3.select("#conv-all")
-        .style("top", (-padding + config.cellHeight + config.borderWidth / 2) + "px")
-        .style("left", (padding + config.cellWidth * (config.inputWidth + 1) + config.spaceBetween * 3/4) + "px")
+    root.select("#annotationWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 2 - text_area_w / 2 + config.borderWidth / 2},
+                                      ${config.img_height - config.cellHeight - text_area_h - config.kernelCellHeight * (config.kernelHeight + 1/2) + config.borderWidth / 2})`);
+
+    root.select("#annotation")
+        .select("rect")
+        .attr("width", text_area_w)
+        .attr("height", text_area_h);
+
+    root.select("#annotation-text")
+        .attr("font-size", config.fontSize)
+        .attr("x", text_area_w / 2)
+        .attr("y", "1em")
+        .text(orig_text)
+        .call(wrap, text_area_w);
+
+    const convAllButton = root.select("#convAllButtonWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
+                                      ${config.cellHeight})`);
+    convAllButton.select("#convAllButtonColor")
+        .attr("width", config.spaceBetween / 2)
+        .attr("height", config.spaceBetween / 8);
+    convAllButton.select("#convAllButtonText")
+        .attr("x", config.spaceBetween / 4)
+        .attr("y", config.spaceBetween / 16)
+        .attr("font-size", config.fontSize);
+
+    const convButton = root.select("#convButtonWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
+                                      ${config.cellHeight * 2 + config.spaceBetween / 8})`);
+    convButton.select("#convButtonColor")
+        .attr("width", config.spaceBetween / 2)
+        .attr("height", config.spaceBetween / 8);
+    convButton.select("#convButtonText")
+        .attr("x", config.spaceBetween / 4)
+        .attr("y", config.spaceBetween / 16)
+        .attr("font-size", config.fontSize);
+
+    const prevButton = root.select("#prevButtonWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
+                                      ${config.cellHeight * 3 + config.spaceBetween / 4})`);
+    prevButton.select("#prevButtonColor")
+        .attr("width", config.spaceBetween / 4)
+        .attr("height", config.spaceBetween / 8);
+    prevButton.select("#prevButtonText")
+        .attr("x", config.spaceBetween / 8)
+        .attr("y", config.spaceBetween / 16)
+        .attr("font-size", config.fontSize);
+
+    const nextButton = root.select("#nextButtonWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
+                                      ${config.cellHeight * 3 + config.spaceBetween / 4})`);
+    nextButton.select("#nextButtonColor")
+        .attr("x", config.spaceBetween / 4)
+        .attr("width", config.spaceBetween / 4)
+        .attr("height", config.spaceBetween / 8);
+    nextButton.select("#nextButtonText")
+        .attr("x", config.spaceBetween * 3 / 8)
+        .attr("y", config.spaceBetween / 16)
+        .attr("font-size", config.fontSize);
+
+    const selectionWrapper = d3.select("#convIntroSection")
+        .select("#selectionWrapper");
+    //selectionWrapper.select("#firstSpacing")
+    //    .style("width", config.cellWidth);
+    selectionWrapper.select("#thumbs")
+        .style("width", config.img_width);
+    selectionWrapper.select("#secondSpacing")
+        .style("width", config.spaceBetween);
+    selectionWrapper.select("#kernels")
+        .style("width", config.img_width);
+    selectionWrapper.select("#thirdSpacing")
+        .style("width", config.cellWidth);
 }

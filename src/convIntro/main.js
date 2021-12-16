@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import * as tf from "@tensorflow/tfjs";
 
-import * as config from "./config";
+import * as config from "../config";
 
 import {initSVG, initInputImg, initKernelImg, initOutputImg, initEffects, initAnnotations, updateAnnotation, initControls} from "./initSVG";
 import {drawInputData, drawKernelData, drawOutputData, drawEffects, removeEffects, grayToFloat, drawOutputDataPoint} from "./updateSVG";
@@ -16,17 +16,17 @@ export let kernel = [[]];
 
 export let slide_idx = 0
 let slides = [
-    new Slide("Bird", "demo", "Convolution simply takes two matrics of the same size, gives weight to neighbors of a pixel, then sums the weights. \n \n " +
-        "Mouse over the left input matrix to convolve small patches with the kernel below! (Or use one of 'Auto Conv' and 'Conv All') \n \n Click 'Next' once " + 
+    new Slide("Bird", "demo", "Convolution simply takes two matrics of the same size, multiplies corresponding entries and adds them together. \n \n " +
+        "Mouse over the left input matrix to convolve small patches with the kernel below! (Or use one of 'Auto Conv' and 'Conv All') \n \n Click 'Next' once " +
         "you understand how the math works.", 0, 0),
     new Slide("Bird", "edge_detection", "Usually convolution is applied to images, where the numbers represent colors. \n \n " +
-        "The kernel is applied to each color channel (r, g, b). \n \n " + 
-        "The kernel below is an edge detection filter. Use it to highlight the edges of the bird. ", 0, 0),       
+        "The kernel is applied to each color channel (r, g, b). \n \n " +
+        "The kernel below is an edge detection filter. Use it to highlight the edges of the bird. ", 0, 0),
     new Slide("Dog", "sharpen", "Convolution is often used for image processing in photo editing tools. \n \n " +
-        "The kernel below sharpens the image. See the kernel values: it amplifies the middle pixel and subtracts the surrounding pixels. \n \n " + 
+        "The kernel below sharpens the image. See the kernel values: it amplifies the middle pixel and subtracts the surrounding pixels. \n \n " +
         "Use it to sharpen the puppy!", 0, 0),
     new Slide("Dog", "box_blur", "We can also blur images in a similar way. \n \n " +
-        "The box blur kernel below averages the surrounding pixels, thus blurring the image. \n \n " + 
+        "The box blur kernel below averages the surrounding pixels, thus blurring the image. \n \n " +
         "Use it to blur the puppy!", 0, 0),
     new Slide("Plane", "x_sobel", "This kernel is called 'Horizontal Sobel'. It picks up color changes in the horizontal direction. \n \n " +
         "Note the high response along the edges of the plane, since there the color transitions from plane to sky.", 0, 0),
@@ -36,8 +36,8 @@ let slides = [
 
 /**
  * Given a url to an image, displays the image as a matrix of pixels.
- * 
- * @param {String} url 
+ *
+ * @param {String} url
  */
 function loadImage(url) {
     const canvas = document.getElementById('input-image');
@@ -49,7 +49,7 @@ function loadImage(url) {
     base_image.onload = () => {
         canvas.width = base_image.width;
         canvas.height = base_image.height;
-        
+
         for (let i = 0; i < canvas.height; i++) {
             pixelValues[i] = [];
         }
@@ -93,7 +93,7 @@ function initKernelPreviews() {
             let selected = document.getElementsByClassName("kselected");
             selected[0].setAttribute("class", "kernel");
             kernelTable.setAttribute("class", "kernel kselected");
-            updateData();    
+            updateData();
         });
         if(first) {
             kernelTable.setAttribute("class", "kselected kernel")
@@ -129,11 +129,11 @@ function getKernelTable(kernel, name) {
 function animateConv() {
     let stop_anim = false
 
-    d3.select("#prevButtonWrapper").attr("visibility", "hidden");
-    d3.select("#nextButtonWrapper").attr("visibility", "hidden");
-    d3.select("#convAllButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#prevButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#nextButtonWrapper").attr("visibility", "hidden");
+    d3.select("#convIntroSection").select("#convAllButtonWrapper").attr("visibility", "hidden");
 
-    d3.select("#selectionWrapper").node().style.visibility = "hidden";
+    d3.select("#convIntroSection").select("#selectionWrapper").node().style.visibility = "hidden";
 
     let default_val = slide_idx == 0 ? 0 : 255;
     visibleImg = [...Array(config.outputWidth)].map(() => [...Array(config.outputHeight)].map(() => [default_val, default_val, default_val]));
@@ -142,41 +142,41 @@ function animateConv() {
     drawOutputData(true);
 
 
-    d3.select("#convButtonColor")
+    d3.select("#convIntroSection").select("#convButtonColor")
         .on("click", () => { stop_anim = true; })
         .attr("fill", config.stopColor);
-    d3.select("#convButtonText").text("Stop");
+    d3.select("#convIntroSection").select("#convButtonText").text("Stop");
 
     let pixel = 0;
     const interval = d3.interval(() => {
         const row = pixel % resultImg[0].length;
         const col = Math.floor(pixel / resultImg[0].length);
- 
+
         visibleImg[col][row] = resultImg[col][row];
 
         drawEffects(row, col);
         drawOutputDataPoint(pixel);
-        
+
         if (stop_anim || pixel >= resultImg.length * resultImg[0].length - 1) {
             interval.stop();
             drawInputData(false);
             drawOutputData(false);
             removeEffects()
 
-            d3.select("#convButtonColor").attr("fill", config.convolveColor).on("click", animateConv);
-            d3.select("#convButtonText").text("Convolve");
+            d3.select("#convIntroSection").select("#convButtonColor").attr("fill", config.convolveColor).on("click", animateConv);
+            d3.select("#convIntroSection").select("#convButtonText").text("Convolve");
             if (slide_idx > 0) {
-                d3.select("#prevButtonWrapper")
+                d3.select("#convIntroSection").select("#prevButtonWrapper")
                     .attr("visibility", "visible");
             }
             if (slide_idx < slides.length - 1) {
-                d3.select("#nextButtonWrapper")
+                d3.select("#convIntroSection").select("#nextButtonWrapper")
                     .attr("visibility", "visible");
             }
-            d3.select("#convAllButtonWrapper").attr("visibility", "visible");
+            d3.select("#convIntroSection").select("#convAllButtonWrapper").attr("visibility", "visible");
 
             if (slide_idx == slides.length - 1) {
-               d3.select("#selectionWrapper").node().style.visibility = "visible";
+               d3.select("#convIntroSection").select("#selectionWrapper").node().style.visibility = "visible";
             }
         } else {
             ++pixel;
@@ -200,7 +200,7 @@ function updateData() {
     if (slide_idx == slides.length - 1) {
         img_url = document.getElementsByClassName("selected")[0].getAttribute("src");
         kernel_name = document.getElementsByClassName("kselected")[0].dataset.name;
-        
+
         // Get description
         kernel_description = config.kernelBlurbs[kernel_name];
     }
@@ -210,7 +210,7 @@ function updateData() {
         kernel_name = slides[slide_idx].kernel;
     }
     if (slide_idx == 0) {
-        kernel = [[0,1,0],[1,2,1],[0,1,0]];
+        kernel = [[0,1,0],[1,5,1],[0,1,0]];
     } else {
         kernel = config.kernels[kernel_name];
     }
@@ -254,18 +254,22 @@ function update_slide(kernel_description=null) {
     updateAnnotation(annotation)
 
     if (slide_idx == 0) {
-        d3.select("#prevButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#prevButtonWrapper")
             .attr("visibility", "hidden");
     } else if (slide_idx == slides.length - 1) {
-        d3.select("#nextButtonWrapper")
-           .attr("visibility", "hidden");
+        d3.select('#rootDisplay')
+            .select("#nextButtonWrapper")
+            .attr("visibility", "hidden");
     } else {
-        d3.select("#prevButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#prevButtonWrapper")
             .attr("visibility", "visible");
-        d3.select("#nextButtonWrapper")
+        d3.select('#rootDisplay')
+            .select("#nextButtonWrapper")
             .attr("visibility", "visible");
     }
-        
+
 
 
     if (slide_idx == slides.length - 1) {
@@ -295,10 +299,10 @@ function next_slide() {
 
 export function initButtons() {
     const convAllButton = d3.select("#rootDisplay")
-    .append("g")
-    .attr("id", "convAllButtonWrapper")
-    .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
-                                  ${config.cellHeight})`);
+        .append("g")
+        .attr("id", "convAllButtonWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
+                                      ${config.cellHeight})`);
 
     convAllButton.append("rect")
         .attr("id", "convAllButtonColor")
@@ -306,6 +310,7 @@ export function initButtons() {
         .attr("y", 0)
         .attr("width", config.spaceBetween / 2)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", conv_all)
         .attr("fill", config.convolveColor);
     convAllButton.append("text")
@@ -320,16 +325,17 @@ export function initButtons() {
         .text("Convolve All");
 
     const convButton = d3.select("#rootDisplay")
-    .append("g")
-    .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
-                                  ${config.cellHeight * 2 + config.spaceBetween / 8})`);
-
+        .append("g")
+        .attr("id", "convButtonWrapper")
+        .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
+                                      ${config.cellHeight * 2 + config.spaceBetween / 8})`);
     convButton.append("rect")
         .attr("id", "convButtonColor")
         .attr("x", 0)
         .attr("y", 0)
         .attr("width", config.spaceBetween / 2)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", animateConv)
         .attr("fill", config.convolveColor);
     convButton.append("text")
@@ -352,6 +358,7 @@ export function initButtons() {
     const nextButton = d3.select("#rootDisplay")
         .append("g")
         .attr("id", "nextButtonWrapper")
+        .attr("visibility", "visible")
         .attr("transform", `translate(${config.img_width + config.spaceBetween / 4},
                                   ${config.cellHeight * 3 + config.spaceBetween / 4})`);
 
@@ -361,6 +368,7 @@ export function initButtons() {
         .attr("id", "prevButtonColor")
         .attr("width", config.spaceBetween / 4)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", prev_slide)
         .attr("fill", config.prevColor);
     prevButton.append("text")
@@ -380,6 +388,7 @@ export function initButtons() {
         .attr("y", 0)
         .attr("width", config.spaceBetween / 4)
         .attr("height", config.spaceBetween / 8)
+        .style("cursor", "pointer")
         .on("click", next_slide)
         .attr("fill", config.nextColor);
     nextButton.append("text")
@@ -398,17 +407,54 @@ export function initButtons() {
 /**
  * This function will run when the document has loaded.
  */
-export function main() {
-    document.documentElement.style.setProperty('--thumbSize', `${config.cellWidth * 3 + 3 * 2 + 2 * 3}px`);
-    document.documentElement.style.setProperty('--kernelThumbSize', `${config.cellWidth}px`);
-    document.documentElement.style.setProperty('--kernelThumbFont', `${config.fontSize}px`);
+export function initConvIntroSection() {
+    const selectionWrapper = d3.select("#convIntroSection")
+        .append("div")
+        .attr("id", "selectionWrapper")
+        .style("display", "flex")
+        .style("padding", 0)
+        .style("visibility", "hidden");
+    selectionWrapper.append("div")
+        .attr("id", "firstSpacing")
+        .style("width", "9%");
+    const thumbs = selectionWrapper.append("div")
+        .attr("id", "thumbs")
+        .style("width", config.img_width);
+    const hiddenPadding = thumbs.append("div");
+    hiddenPadding.append("p")
+        .style("font-size", "var(--kernelThumbFont")
+        .style("margin-block-start", 0)
+        .style("margin-block-end", 0)
+        .style("visibility", "hidden")
+        .text("-");
+    hiddenPadding.append("p")
+        .style("font-size", "var(--kernelThumbFont")
+        .style("margin-block-start", 0)
+        .style("margin-block-end", 0)
+        .style("visibility", "hidden")
+        .text("-");
+    const imgUrls = Object.values(config.imageUrls);
+    for (let i = 0; i < imgUrls.length; ++i) {
+        const img = thumbs.append("img")
+            .classed("thumbnail", true)
+            .attr("src", imgUrls[i]);
+        if (i === 0) {
+            img.classed("selected", true);
+        }
+    }
+    selectionWrapper.append("div")
+        .attr("id", "secondSpacing")
+        .style("width", config.spaceBetween);
+    selectionWrapper.append("div")
+        .attr("id", "kernels")
+        .style("width", config.img_width);
 
     for(let thumbnail of document.getElementsByClassName("thumbnail")) {
         thumbnail.addEventListener("click", (a, b) => {
             let selected = document.getElementsByClassName("selected");
             selected[0].setAttribute("class", "thumbnail");
             thumbnail.setAttribute("class", "thumbnail selected");
-            updateData();    
+            updateData();
         })
     }
 
@@ -420,9 +466,8 @@ export function main() {
     initAnnotations();
 
     update_slide();
-    initControls();
     initKernelPreviews();
     updateData();
-    
+
     initButtons();
 }
