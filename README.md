@@ -1,8 +1,6 @@
 # Website link
 
-[Final Project](https://uw-cse442-wi20.github.io/FP-convolutional-neural-networks/)
-
-Post-mortem version here: [convolutionalneuralnetworks.tk](https://convolutionalneuralnetworks.tk)
+Current version here: [convolutionalneuralnetworks.tk](https://convolutionalneuralnetworks.tk)
 
 ## Getting Started
 
@@ -31,4 +29,4 @@ To run the project locally, run `npm start` and it will be available at http://l
 ### Building the final output
 
 Run `npm run build` and all of your assets will be compiled and placed into the `dist/` folder. Note
-that this command will overwrite the existing docs folder.
+that this command will overwrite the existing dist folder.
